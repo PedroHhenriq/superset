@@ -9,7 +9,7 @@ def make_user(first_name: str | None = None, last_name: str | None = None, usern
     user.username = username
     return user
 
-# Testes iniciando com Caixa-preta e complementando com Caixa-Branca
+# Tests starting with Black-Box and complementing with White-Box
 
 class TestUserLabelCaixaPretaPE:
     def test_pe_valid_full_name_returns_first_last(self) -> None:
@@ -54,7 +54,7 @@ class TestUserLabelCaixaPretaAVL:
     def test_avl_last_name_empty_string(self) -> None:
         assert user_label(make_user("Ana", "", "u")) == "u"
 
-# Complemento Caixa-Branca (MCDC) para garantir cobertura de decisões complexas isoladas
+# White-Box Complement (MCDC) to ensure isolated complex decision coverage
 
 class TestUserLabelMCDC:
     def test_mcdc_condition_a_true_b_true(self) -> None:
@@ -72,7 +72,7 @@ class TestUserLabelMCDC:
     def test_mcdc_condition_a_truthy_b_none(self) -> None:
         assert user_label(make_user("Ana", None, "u")) == "u"
 
-# Testes iniciando com Caixa-Branca e complementando com Caixa-Preta 
+# Tests starting with White-Box and complementing with Black-Box
 
 class TestUserLabelCaixaBrancaBranches:
     def test_branch_user_is_none_returns_none_immediately(self) -> None:
@@ -90,7 +90,7 @@ class TestUserLabelCaixaBrancaBranches:
     def test_branch_whitespace_bypasses_falsy_check(self) -> None:
         assert user_label(make_user("  ", "  ", "username")) == "     "
 
-# Complemento Caixa-Preta e Integração
+# Black-Box Complement and Integration
 
 class TestUserLabelIntegration:
     def test_integration_black_box_covers_whitespace_branch(self) -> None:
