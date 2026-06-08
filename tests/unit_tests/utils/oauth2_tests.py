@@ -21,6 +21,7 @@ import base64
 import hashlib
 from datetime import datetime
 from typing import cast
+from unittest.mock import MagicMock
 
 import pytest
 from freezegun import freeze_time
@@ -35,6 +36,7 @@ from superset.utils.oauth2 import (
     get_oauth2_access_token,
     get_oauth2_redirect_uri,
     refresh_oauth2_token,
+    check_for_oauth2,
 )
 
 DUMMY_OAUTH2_CONFIG = cast(OAuth2ClientConfig, {})
@@ -558,3 +560,67 @@ def test_get_oauth2_redirect_uri_raises_on_runtime_error(
     )
     with pytest.raises(OAuth2Error):
         get_oauth2_redirect_uri()
+
+
+def make_database(oauth2_enabled: bool, needs_oauth2_result: bool) -> MagicMock:
+    db = MagicMock()
+    db.is_oauth2_enabled.return_value = oauth2_enabled
+    db.db_engine_spec.needs_oauth2.return_value = needs_oauth2_result
+    return db
+
+# ---- TC1: No Exception ----
+def test_no_exception_no_oauth2_action():
+    db = make_database(oauth2_enabled=True, needs_oauth2_result=True)
+    with check_for_oauth2(db):
+        pass  # nenhuma exceção
+    db.db_engine_spec.start_oauth2_dance.assert_not_called()
+
+# ---- TC2: OAuth2 desable  — exception propagated without dancing ----
+def test_oauth2_disabled_exception_propagated():
+    db = make_database(oauth2_enabled=False, needs_oauth2_result=True)
+    with pytest.raises(RuntimeError):
+        with check_for_oauth2(db):
+            raise RuntimeError("erro genérico")
+    db.db_engine_spec.start_oauth2_dance.assert_not_called()
+
+# ---- TC3: OAuth2 enabled BUT exception does not require OAuth2 — MC/DC Par B ----
+def test_oauth2_enabled_but_not_needed():
+    db = make_database(oauth2_enabled=True, needs_oauth2_result=False)
+    with pytest.raises(ValueError):
+        with check_for_oauth2(db):
+            raise ValueError("outro erro")
+    db.db_engine_spec.start_oauth2_dance.assert_not_called()
+
+# ---- TC4: OAuth2 enabled and exception requires OAuth2 — MC/DC T4 (Decision True) ----
+def test_oauth2_enabled_and_needed_starts_dance():
+    db = make_database(oauth2_enabled=True, needs_oauth2_result=True)
+    with pytest.raises(Exception):
+        with check_for_oauth2(db):
+            raise Exception("oauth2 necessário")
+    db.db_engine_spec.start_oauth2_dance.assert_called_once_with(db)
+
+# ---- TC5: Exception always brought up again (even after the dance) ----
+def test_exception_always_reraised():
+    db = make_database(oauth2_enabled=True, needs_oauth2_result=True)
+    original = RuntimeError('original')
+    with pytest.raises(RuntimeError) as exc_info:
+        with check_for_oauth2(db):
+            raise original
+    assert exc_info.value is original
+
+# ---- TC6: OAuth2 disabled and exception does not require OAuth2. ----
+def test_oauth2_disabled_and_not_needed():
+    """TC6 / MC/DC T1: Ambas condições False; apenas raise."""
+    db = make_database(oauth2_enabled=False, needs_oauth2_result=False)
+    with pytest.raises(KeyError):
+        with check_for_oauth2(db):
+            raise KeyError('chave')
+    db.db_engine_spec.start_oauth2_dance.assert_not_called()
+
+# ---- TC-CP3 (Complementary Black Box): Exception type preserved ----
+def test_exception_type_preserved():
+    """TCP3: O tipo exato da exceção é mantido no re-raise."""
+    db = make_database(oauth2_enabled=False, needs_oauth2_result=False)
+    with pytest.raises(TypeError):
+        with check_for_oauth2(db):
+            raise TypeError("tipo errado")
