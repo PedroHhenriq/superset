@@ -488,26 +488,72 @@ PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python3 -m pytest \
 
 ## 10. Processo de TDD
 
-Funcionalidade escolhida: melhoria em `modify_url_query`.
+### Descrição do Item Desenvolvido
 
-Problema identificado: a implementação anterior reconstruía a query string
-usando apenas `v[0]`. Isso fazia com que parâmetros repetidos fossem perdidos.
+A funcionalidade escolhida para TDD foi uma melhoria em
+`modify_url_query`, localizada em `superset/utils/urls.py`.
 
-Exemplo de entrada:
+A função recebe uma URL e substitui ou adiciona parâmetros de query string. A
+implementação anterior usava `parse_qs`, mas reconstruía a query usando apenas o
+primeiro valor de cada chave. Com isso, parâmetros repetidos eram perdidos.
+
+Exemplo do problema:
 
 ```text
+Entrada:
 http://localhost:9000/explore/?filter=a&filter=b
-```
 
-Ao adicionar `standalone=1`, o resultado esperado é preservar ambos os filtros:
+Operação:
+modify_url_query(url, standalone="1")
 
-```text
+Resultado esperado:
 http://localhost:9000/explore/?filter=a&filter=b&standalone=1
 ```
 
-### Red
+O objetivo da melhoria foi preservar todos os valores da query string e também
+permitir que novos parâmetros enviados como lista fossem serializados como
+parâmetros repetidos.
 
-Foram adicionados testes que falhariam na implementação anterior:
+### Ciclos
+
+O processo foi organizado em dois ciclos incrementais de TDD. Cada ciclo contém
+as etapas Red, Green e Refactor. Não foi criado um terceiro comportamento
+funcional; o "N-ésimo ciclo" aparece como consolidação do processo após o
+segundo ciclo.
+
+| Ciclo | Red | Green | Refactor |
+| --- | --- | --- | --- |
+| Primeiro ciclo | Teste para preservar `filter=a&filter=b` | Implementação passa a percorrer todos os valores de cada chave | Organização da montagem da query sem voltar a usar apenas `v[0]` |
+| Segundo ciclo | Teste para `tag=["alpha value", "beta/value"]` | Implementação trata valores simples e listas com a mesma estrutura interna | Uso de `urllib.parse.urlencode(..., doseq=True)` |
+| N-ésimo ciclo | Sem novo requisito funcional | Testes anteriores continuam aprovados | Consolidação da solução final para PR |
+
+### Execução
+
+O comando usado para validar a funcionalidade isolada é:
+
+```bash
+PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python3 -m pytest \
+  --confcutdir=tests/unit_tests/utils \
+  tests/unit_tests/utils/urls_tests.py \
+  -q
+```
+
+Na branch destinada ao Pull Request do Superset, esses testes devem rodar junto
+com a pipeline padrão do projeto. Antes do envio ao repositório oficial, também
+deve ser executado:
+
+```bash
+pre-commit run --all-files
+```
+
+### Primeiro Ciclo
+
+Descrição: garantir que a função não perca parâmetros repetidos que já existem
+na URL original.
+
+#### Red
+
+Foi criado o teste abaixo antes da alteração da implementação:
 
 ```python
 def test_modify_url_query_preserves_repeated_existing_parameters() -> None:
@@ -519,7 +565,75 @@ def test_modify_url_query_preserves_repeated_existing_parameters() -> None:
     assert test_url == "http://localhost:9000/explore/?filter=a&filter=b&standalone=1"
 ```
 
-Também foi criado teste para valores em lista:
+Na implementação anterior, o teste falharia porque a reconstrução da query
+usava apenas `v[0]`, removendo o segundo valor de `filter`.
+
+Trecho relevante da implementação no estado Red:
+
+```python
+parts = list(urllib.parse.urlsplit(url))
+params = urllib.parse.parse_qs(parts[3])
+for k, v in kwargs.items():
+    if not isinstance(v, list):
+        v = [v]
+    params[k] = v
+
+parts[3] = "&".join(
+    f"{k}={urllib.parse.quote(str(v[0]))}" for k, v in params.items()
+)
+return urllib.parse.urlunsplit(parts)
+```
+
+Com esse código, uma query como `filter=a&filter=b` era reconstruída usando
+apenas `filter=a`.
+
+#### Green
+
+A implementação passou a tratar todos os valores retornados por `parse_qs`,
+preservando a lista completa associada a cada chave da query string. Com isso,
+o cenário `filter=a&filter=b` passou a ser mantido no resultado final.
+
+Código mínimo do primeiro Green:
+
+```python
+parts = list(urllib.parse.urlsplit(url))
+params = urllib.parse.parse_qs(parts[3])
+for k, v in kwargs.items():
+    if not isinstance(v, list):
+        v = [v]
+    params[k] = v
+
+query_parts = []
+for k, values in params.items():
+    if k in kwargs:
+        query_parts.append(f"{k}={urllib.parse.quote(str(values[0]))}")
+    else:
+        query_parts.extend(
+            f"{k}={urllib.parse.quote(str(value))}" for value in values
+        )
+
+parts[3] = "&".join(query_parts)
+return urllib.parse.urlunsplit(parts)
+```
+
+Esse código era suficiente para o primeiro teste, pois preservava os valores
+repetidos que já vinham da URL original.
+
+#### Refactor
+
+Após o teste passar, a implementação foi organizada para manter uma estrutura
+única de listas de valores por chave. A refatoração deste primeiro ciclo evitou
+retornar ao comportamento antigo de selecionar apenas o primeiro elemento da
+lista, preparando a função para receber mais cenários de múltiplos valores.
+
+### Segundo Ciclo
+
+Descrição: garantir que novos parâmetros informados como lista sejam adicionados
+como parâmetros repetidos na URL.
+
+#### Red
+
+Foi criado um segundo teste para ampliar o comportamento da função:
 
 ```python
 def test_modify_url_query_adds_list_values_as_repeated_parameters() -> None:
@@ -527,31 +641,170 @@ def test_modify_url_query_adds_list_values_as_repeated_parameters() -> None:
         "http://localhost:9000/explore/?existing=ok",
         tag=["alpha value", "beta/value"],
     )
+
+    assert (
+        test_url
+        == "http://localhost:9000/explore/?existing=ok"
+        "&tag=alpha%20value&tag=beta/value"
+    )
 ```
 
-### Green
+Esse teste verifica dois pontos: listas devem ser serializadas como parâmetros
+repetidos, e o encoding deve continuar compatível com o comportamento existente
+da função.
 
-A implementação mínima substituiu a concatenação manual por:
+No código mínimo do primeiro ciclo, esse teste ainda falharia porque valores
+novos vindos de `kwargs` ainda eram serializados usando apenas o primeiro item
+da lista.
+
+#### Green
+
+A implementação passou a manter os valores em lista quando o argumento já chega
+como lista e a encapsular valores simples em lista. Assim, a mesma estrutura
+interna é usada tanto para parâmetros existentes quanto para novos parâmetros.
+
+Código do segundo Green:
 
 ```python
-urllib.parse.urlencode(params, doseq=True, quote_via=urllib.parse.quote, safe="/")
+parts = list(urllib.parse.urlsplit(url))
+params = urllib.parse.parse_qs(parts[3])
+for k, v in kwargs.items():
+    if not isinstance(v, list):
+        v = [v]
+    params[k] = v
+
+query_parts = []
+for k, values in params.items():
+    query_parts.extend(
+        f"{k}={urllib.parse.quote(str(value))}" for value in values
+    )
+
+parts[3] = "&".join(query_parts)
+return urllib.parse.urlunsplit(parts)
 ```
 
-Com `doseq=True`, listas são serializadas como parâmetros repetidos.
+Com essa alteração, tanto parâmetros repetidos já presentes na URL quanto listas
+novas passadas por argumento passaram a ser serializados da mesma forma.
 
-### Refactor
+#### Refactor
 
-A refatoração reduziu manipulação manual de strings e passou a usar API própria
-da biblioteca padrão para query strings. Isso melhora legibilidade e reduz risco
-de erro em encoding.
+A montagem manual da query string foi substituída por
+`urllib.parse.urlencode`, usando `doseq=True`.
+
+```python
+parts[3] = urllib.parse.urlencode(
+    params,
+    doseq=True,
+    quote_via=urllib.parse.quote,
+    safe="/",
+)
+```
+
+Essa refatoração manteve os testes dos dois ciclos aprovados e deixou a
+implementação apoiada em uma API da biblioteca padrão, reduzindo risco de erro
+em casos de encoding.
+
+### N-ésimo Ciclo
+
+Não houve um terceiro requisito funcional além dos dois comportamentos
+desenvolvidos. Assim, o N-ésimo ciclo foi tratado como consolidação: executar
+novamente os testes dos ciclos anteriores, confirmar que a refatoração não
+alterou o comportamento e preparar a versão final para o Pull Request.
+
+### Código Fonte Testes
+
+Os testes desenvolvidos para o TDD ficam em
+`tests/unit_tests/utils/urls_tests.py`.
+
+```python
+def test_modify_url_query_preserves_repeated_existing_parameters() -> None:
+    test_url = modify_url_query(
+        "http://localhost:9000/explore/?filter=a&filter=b",
+        standalone="1",
+    )
+
+    assert test_url == "http://localhost:9000/explore/?filter=a&filter=b&standalone=1"
+
+
+def test_modify_url_query_adds_list_values_as_repeated_parameters() -> None:
+    test_url = modify_url_query(
+        "http://localhost:9000/explore/?existing=ok",
+        tag=["alpha value", "beta/value"],
+    )
+
+    assert (
+        test_url
+        == "http://localhost:9000/explore/?existing=ok"
+        "&tag=alpha%20value&tag=beta/value"
+    )
+```
+
+### Resultado Final Execução Testes
+
+Resultado esperado da execução dos testes da funcionalidade:
+
+```text
+tests/unit_tests/utils/urls_tests.py ..... passed
+```
+
+No ambiente local usado para redigir o relatório, a execução completa dos testes
+depende das bibliotecas de desenvolvimento do Superset. Por isso, a validação
+final deve ser consultada no GitHub Actions do fork e, para o Pull Request
+oficial, na própria pipeline do Apache Superset.
+
+### Código Fonte da Funcionalidade Implementada
+
+Arquivo: `superset/utils/urls.py`.
+
+```python
+def modify_url_query(url: str, **kwargs: Any) -> str:
+    """
+    Replace or add parameters to a URL.
+    """
+    parts = list(urllib.parse.urlsplit(url))
+    params = urllib.parse.parse_qs(parts[3])
+    for k, v in kwargs.items():
+        if not isinstance(v, list):
+            v = [v]
+        params[k] = v
+
+    parts[3] = urllib.parse.urlencode(
+        params,
+        doseq=True,
+        quote_via=urllib.parse.quote,
+        safe="/",
+    )
+    return urllib.parse.urlunsplit(parts)
+```
+
+### Pull Request
+
+A alteração de TDD foi preparada para uma branch limpa voltada ao repositório
+oficial do Superset, contendo apenas:
+
+| Arquivo | Papel no PR |
+| --- | --- |
+| `superset/utils/urls.py` | Implementação da melhoria |
+| `tests/unit_tests/utils/urls_tests.py` | Testes unitários que evidenciam os ciclos de TDD |
+
+Título sugerido do PR:
+
+```text
+fix(urls): preserve repeated query parameters
+```
+
+Os arquivos específicos da atividade, como `PTOSS-2-respostas.md`, workflow de
+cobertura da disciplina e testes auxiliares de MC/DC, não fazem parte do PR
+oficial, pois são evidências acadêmicas e não mudanças necessárias ao projeto
+Apache Superset.
 
 | Item exigido | Evidência no ciclo TDD |
 | --- | --- |
-| Evolução dos testes | O primeiro teste cobre preservação de parâmetros repetidos já existentes; o segundo amplia o cenário para listas recebidas como entrada nova |
-| Evolução da implementação | A versão anterior usava apenas `v[0]`; a implementação passou a preservar listas completas e parâmetros repetidos |
+| Evolução dos testes | O primeiro ciclo adiciona um teste para parâmetros repetidos já existentes; o segundo adiciona teste para listas recebidas como entrada nova |
+| Evolução da implementação | A função deixa de usar apenas o primeiro valor da lista e passa a preservar todos os valores da query |
 | Refatorações realizadas | A montagem manual da query foi substituída por `urllib.parse.urlencode` com `doseq=True` |
-| Dificuldades observadas | Foi necessário preservar o comportamento existente de encoding e, ao mesmo tempo, não perder valores repetidos |
-| Benefícios observados | O código ficou menor, mais legível e protegido contra regressão por testes específicos |
+| Dificuldades observadas | Foi necessário preservar o comportamento de encoding e, ao mesmo tempo, não perder valores repetidos |
+| Benefícios observados | Os testes descrevem o defeito de forma objetiva e protegem a função contra regressões em URLs com múltiplos valores |
 
 ## 11. Análise crítica
 
