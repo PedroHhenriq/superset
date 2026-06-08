@@ -1,441 +1,137 @@
-# PTOSS-2: Testes Unitários
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
 
-## 1. Introdução
+  http://www.apache.org/licenses/LICENSE-2.0
 
-Este relatório documenta a atividade PTOSS-2 da disciplina FGA0314 - Testes de
-Software. O trabalho foi realizado sobre o Apache Superset, com foco em testes
-unitários de funções reais do backend Python.
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+-->
 
-A equipe possui 6 integrantes. Por isso, foram selecionados 6 métodos/funções
-com decisões compostas, permitindo aplicar MC/DC em todos eles.
+# PTOSS-2: Artefatos do Repositório
 
-| Integrante | Responsabilidade principal |
+Este documento registra os artefatos usados na entrega da atividade PTOSS-2,
+com foco nas branches preparadas para Pull Requests no Apache Superset.
+
+## Pull Requests Principais
+
+| PR | Branch | Objetivo | Status |
+| --- | --- | --- | --- |
+| `fix(urls): preserve repeated query parameters` | `fix/modify-url-query-repeated-params` | Corrigir `modify_url_query` para preservar parâmetros repetidos e listas em query strings | Branch preparada para PR oficial |
+| `test(version): cover development environment label` | `test/get-dev-env-label` | Adicionar teste unitário para `get_dev_env_label` | Branch preparada para PR oficial |
+
+Os links dos PRs devem ser preenchidos após a abertura no repositório oficial:
+
+| PR | Link |
 | --- | --- |
-| Integrante 1 | `get_current_user` |
-| Integrante 2 | `get_dev_env_label` |
-| Integrante 3 | `user_label` |
-| Integrante 4 | `split` |
-| Integrante 5 | `check_for_oauth2` |
-| Integrante 6 | `ScreenshotCachePayload.should_trigger_task` |
+| `fix(urls): preserve repeated query parameters` | A preencher |
+| `test(version): cover development environment label` | A preencher |
 
-## 2. Descrição do projeto
+## Código-Fonte Utilizado
 
-O Apache Superset é uma plataforma de visualização de dados de código aberto.
-O backend é implementado em Python/Flask e o frontend em React/TypeScript.
+| Branch | Arquivo | Função | Uso na atividade |
+| --- | --- | --- | --- |
+| `fix/modify-url-query-repeated-params` | `superset/utils/urls.py` | `modify_url_query` | Funcionalidade corrigida por TDD |
+| `fix/modify-url-query-repeated-params` | `tests/unit_tests/utils/urls_tests.py` | testes de `modify_url_query` | Testes do ciclo Red/Green/Refactor |
+| `test/get-dev-env-label` | `superset/utils/version.py` | `get_dev_env_label` | Código existente exercitado por teste unitário novo |
+| `test/get-dev-env-label` | `tests/unit_tests/utils/version_tests.py` | testes de `get_dev_env_label` | Teste unitário compatível com PR upstream |
+| `ptoss-2-tdd-cycles` | `.github/workflows/ptoss-backend-tests.yml` | workflow de CI | Execução dos testes e geração de cobertura no fork da equipe |
 
-Nesta atividade, a análise foi concentrada em funções utilitárias do backend,
-pois elas possuem entradas e saídas bem definidas e permitem testes unitários
-sem depender diretamente de interface gráfica.
+## Testes Implementados
 
-Arquivos envolvidos:
+### PR `fix(urls): preserve repeated query parameters`
 
-| Arquivo | Papel no projeto |
+Arquivo: `tests/unit_tests/utils/urls_tests.py`.
+
+| Teste | Objetivo |
 | --- | --- |
-| `superset/utils/core.py` | Utilitários centrais do backend |
-| `superset/utils/oauth2.py` | Fluxo auxiliar de OAuth2 |
-| `superset/utils/screenshots.py` | Controle de payload/cache de screenshots |
-| `superset/tasks/utils.py` | Utilitários para execução de tarefas assíncronas |
-| `superset/utils/version.py` | Metadados de versão/ambiente de desenvolvimento |
-| `superset/utils/urls.py` | Manipulação de URLs, usada na parte de TDD |
+| `test_modify_url_query_preserves_repeated_existing_parameters` | Verifica que parâmetros repetidos existentes, como `filter=a&filter=b`, não são perdidos |
+| `test_modify_url_query_adds_list_values_as_repeated_parameters` | Verifica que valores recebidos como lista são serializados como parâmetros repetidos |
 
-## 3. Planejamento dos testes
+### PR `test(version): cover development environment label`
 
-A seleção foi refeita para atender ao requisito de MC/DC: todos os 6 métodos
-testados possuem ao menos uma decisão composta com duas ou mais condições
-atômicas.
+Arquivo: `tests/unit_tests/utils/version_tests.py`.
 
-Critérios usados:
-
-| Critério | Aplicação |
+| Teste | Objetivo |
 | --- | --- |
-| Particionamento de equivalência | Usuário autenticado/anônimo/ausente, ambiente com branch/SHA, usuário completo/incompleto, estados de cache |
-| Análise de valor limite | `None`, string vazia, item sem delimitador, imagem ausente, SHA truncado |
-| Cobertura de branches | Caminhos verdadeiro/falso das decisões |
-| MC/DC | Cada condição atômica foi variada para demonstrar impacto independente na decisão |
-| TDD | Aplicado separadamente em `modify_url_query` |
+| `test_get_dev_env_label_formats_branch_and_sha` | Cobre combinações de branch/SHA presentes e ausentes |
+| `test_get_dev_env_label_prefers_github_environment` | Verifica precedência das variáveis de ambiente do GitHub sobre valores locais |
 
-## 4. Descrição das técnicas utilizadas
+## Instruções de Execução
 
-Foram usadas técnicas de caixa-preta e caixa-branca de forma complementar.
-Caixa-preta orientou a escolha das classes de entrada e saídas esperadas sem
-depender da implementação. Caixa-branca orientou a seleção dos métodos e a
-variação das condições internas, especialmente nos casos de MC/DC.
+### Execução local dos testes dos PRs
 
-As principais técnicas aplicadas foram:
-
-| Técnica | Uso na atividade |
-| --- | --- |
-| Particionamento de equivalência | Separação de entradas válidas, ausentes, incompletas e estados distintos |
-| Análise de valor limite | Uso de `None`, strings vazias, SHA truncado, delimitador ausente e imagem ausente |
-| Cobertura de branches | Exercício dos caminhos verdadeiro e falso das decisões relevantes |
-| MC/DC | Variação independente de cada condição atômica em decisões compostas |
-| TDD | Criação de testes antes da correção em `modify_url_query` |
-
-## 5. Métodos selecionados para MC/DC
-
-| ID | Função/método | Decisão composta analisada |
-| --- | --- | --- |
-| M1 | `get_current_user` | `hasattr(g, "user") and g.user`; `user and not user.is_anonymous` |
-| M2 | `get_dev_env_label` | `branch and sha` |
-| M3 | `user_label` | `user.first_name and user.last_name` |
-| M4 | `split` | `parens == 0 and not quotes and character == delimiter` |
-| M5 | `check_for_oauth2` | `database.is_oauth2_enabled() and database.db_engine_spec.needs_oauth2(ex)` |
-| M6 | `ScreenshotCachePayload.should_trigger_task` | combinação de `or` com subdecisões `and` por estado |
-
-### Mapeamento método -> arquivo
-
-| Método/função | Arquivo |
-| --- | --- |
-| `get_current_user` | `superset/tasks/utils.py` |
-| `get_dev_env_label` | `superset/utils/version.py` |
-| `user_label` | `superset/utils/core.py` |
-| `split` | `superset/utils/core.py` |
-| `check_for_oauth2` | `superset/utils/oauth2.py` |
-| `ScreenshotCachePayload.should_trigger_task` | `superset/utils/screenshots.py` |
-| `modify_url_query` | `superset/utils/urls.py` |
-
-## 6. Testes desenvolvidos
-
-Arquivo principal criado:
-
-```text
-tests/unit_tests/utils/ptoss_unitarios_test.py
-```
-
-Também foram adicionados testes de TDD em:
-
-```text
-tests/unit_tests/utils/urls_tests.py
-```
-
-Também foi criado um teste em formato compatível com PR upstream:
-
-```text
-tests/unit_tests/utils/version_tests.py
-```
-
-### M1 - `get_current_user`
-
-Objetivo: obter o username do usuário atual associado ao contexto de execução,
-retornando `None` quando não houver usuário ou quando ele for anônimo.
-
-Decisão 1:
-
-```python
-hasattr(g, "user") and g.user
-```
-
-Casos MC/DC:
-
-| Caso | Estado de `g` | C1: possui `user` | C2: `g.user` é verdadeiro | Decisão | Esperado |
-| --- | --- | --- | --- | --- | --- |
-| CT1 | sem atributo `user` | F | - | F | `None` |
-| CT2 | `user=None` | T | F | F | `None` |
-| CT3 | usuário ativo | T | T | T | `"admin"` |
-
-CT1/CT3 mostram o efeito de C1. CT2/CT3 mostram o efeito de C2.
-
-Decisão 2:
-
-```python
-user and not user.is_anonymous
-```
-
-| Caso | Usuário | C1: `user` verdadeiro | C2: não anônimo | Decisão | Esperado |
-| --- | --- | --- | --- | --- | --- |
-| CT4 | usuário ativo | T | T | T | `"admin"` |
-| CT5 | usuário anônimo | T | F | F | `None` |
-| CT6 | usuário ausente | F | - | F | `None` |
-
-CT4/CT5 mostram o efeito de `not user.is_anonymous`. CT4/CT6 mostram o efeito
-da presença do usuário.
-
-### M2 - `get_dev_env_label`
-
-Objetivo: montar o rótulo de ambiente de desenvolvimento a partir da branch e
-do SHA disponíveis.
-
-Decisão:
-
-```python
-branch and sha
-```
-
-| Caso | Branch | SHA | C1: branch presente | C2: SHA presente | Decisão | Esperado |
-| --- | --- | --- | --- | --- | --- | --- |
-| CT7 | `"feature/mcdc"` | `"abcdef1234567890"` | T | T | T | `"feature/mcdc@abcdef12"` |
-| CT8 | `None` | `"abcdef1234567890"` | F | T | F | `"@abcdef12"` |
-| CT9 | `"feature/mcdc"` | `None` | T | F | F | `"feature/mcdc"` |
-
-CT7/CT8 mostram o efeito independente de C1. CT7/CT9 mostram o efeito
-independente de C2. O SHA também cobre o valor limite de truncamento para 8
-caracteres.
-
-#### Testes existentes
-
-Não foi encontrado teste unitário direto para `get_dev_env_label`. O arquivo
-existente de versionamento (`superset/utils/version.py`) era exercitado
-indiretamente por outros fluxos, mas sem validar explicitamente a formação do
-rótulo de ambiente de desenvolvimento.
-
-#### Projeto dos Casos de Testes
-
-O teste foi projetado para ser reaproveitável como PR apenas de teste no
-Superset oficial, sem depender da atividade PTOSS. Por isso, ele foi colocado em
-`tests/unit_tests/utils/version_tests.py`, com nome e estrutura compatíveis com a
-suíte unitária existente.
-
-#### Testes Caixa-Preta
-
-##### Particionamento de Equivalência
-
-| Classe | Entrada representativa | Saída esperada |
-| --- | --- | --- |
-| Branch e SHA disponíveis | branch local + SHA local | `"branch@sha8"` |
-| Apenas SHA disponível | sem branch + SHA local | `"@sha8"` |
-| Apenas branch disponível | branch local + sem SHA | `"branch"` |
-| Nenhuma informação disponível | sem branch + sem SHA | `""` |
-| Ambiente GitHub Actions | `GITHUB_HEAD_REF` + `GITHUB_SHA` | usa variáveis de ambiente |
-
-##### Análise de Valor Limite
-
-| Valor limite | Justificativa | Esperado |
-| --- | --- | --- |
-| SHA maior que 8 caracteres | A função deve truncar o SHA para exibição curta | primeiros 8 caracteres |
-| Branch `None` | Ausência de branch deve cair no formato com apenas SHA | `"@sha8"` |
-| SHA `None` | Ausência de SHA deve retornar apenas branch | `"branch"` |
-| Branch e SHA `None` | Ausência total de dados deve retornar string vazia | `""` |
-
-#### Testes Caixa-Branca
-
-##### Tabela MC/DC
-
-Decisão analisada:
-
-```python
-branch and sha
-```
-
-| Caso | C1: branch presente | C2: SHA presente | Decisão | Resultado |
-| --- | --- | --- | --- | --- |
-| V1 | T | T | T | `"feature/version-label@abcdef12"` |
-| V2 | F | T | F | `"@abcdef12"` |
-| V3 | T | F | F | `"feature/version-label"` |
-| V4 | F | F | F | `""` |
-
-V1/V2 demonstram o efeito independente de `branch`. V1/V3 demonstram o efeito
-independente de `sha`.
-
-##### Cobertura Estrutural
-
-O teste cobre os ramos principais de `get_dev_env_label`: branch com SHA, apenas
-SHA, apenas branch, ausência de ambos e precedência das variáveis de ambiente do
-GitHub Actions sobre os valores locais.
-
-#### Implementação dos Testes
-
-Foram implementados:
-
-```text
-test_get_dev_env_label_formats_branch_and_sha
-test_get_dev_env_label_prefers_github_environment
-```
-
-O primeiro teste usa parametrização para cobrir as classes de equivalência. O
-segundo valida a regra de precedência entre variáveis de ambiente e fallback
-local.
-
-#### Resultado da Execução e Cobertura
-
-O arquivo `tests/unit_tests/utils/version_tests.py` foi incluído no workflow
-`PTOSS Backend Tests`, tanto na checagem sintática quanto na execução com
-cobertura. O relatório final deve ser consultado no artefato
-`ptoss-coverage-reports` após a próxima execução do GitHub Actions.
-
-### M3 - `user_label`
-
-Objetivo: montar o nome exibido de um usuário usando nome e sobrenome quando
-ambos existem; caso contrário, usar `username`.
-
-Decisão:
-
-```python
-user.first_name and user.last_name
-```
-
-| Caso | `first_name` | `last_name` | Decisão | Esperado |
-| --- | --- | --- | --- | --- |
-| CT11 | `"Ada"` | `"Lovelace"` | T | `"Ada Lovelace"` |
-| CT12 | `"Ada"` | `""` | F | `"ada"` |
-| CT13 | `""` | `"Lovelace"` | F | `"ada"` |
-| CT14 | usuário `None` | - | branch externo | `None` |
-
-CT11/CT12 mostram o efeito independente de `last_name`. CT11/CT13 mostram o
-efeito independente de `first_name`.
-
-### M4 - `split`
-
-Objetivo: separar strings respeitando delimitadores dentro de aspas e
-parênteses.
-
-Decisão analisada:
-
-```python
-complete and character == delimiter
-```
-
-Onde:
-
-```python
-complete = parens == 0 and not quotes
-```
-
-Decisão expandida para MC/DC:
-
-```text
-parens == 0 and not quotes and character == delimiter
-```
-
-| Caso | Entrada | C1: fora de parênteses | C2: fora de aspas | C3: caractere delimitador | Esperado |
-| --- | --- | --- | --- | --- | --- |
-| CT15 | `"a,b"` | T | T | T | `["a", "b"]` |
-| CT16 | `"func(a,b),c"` | F no delimitador interno | T | T | `["func(a,b)", "c"]` |
-| CT17 | `"\"a,b\",c"` | T | F no delimitador interno | T | `["\"a,b\"", "c"]` |
-| CT18 | `"abc"` | T | T | F | `["abc"]` |
-
-Os casos variam cada condição mantendo as demais sob controle para mostrar se o
-delimitador é aceito ou ignorado.
-
-### M5 - `check_for_oauth2`
-
-Objetivo: detectar se uma falha de banco exige início do fluxo OAuth2.
-
-Decisão:
-
-```python
-database.is_oauth2_enabled() and database.db_engine_spec.needs_oauth2(ex)
-```
-
-| Caso | OAuth2 habilitado | Exceção exige OAuth2 | Decisão | Esperado |
-| --- | --- | --- | --- | --- |
-| CT19 | T | T | T | chama `start_oauth2_dance` |
-| CT20 | F | T | F | não chama |
-| CT21 | T | F | F | não chama |
-
-CT19/CT20 mostram o efeito independente da primeira condição. CT19/CT21 mostram
-o efeito independente da segunda.
-
-### M6 - `ScreenshotCachePayload.should_trigger_task`
-
-Objetivo: decidir se uma tarefa de screenshot deve ser disparada a partir do
-estado do cache.
-
-Decisão:
-
-```python
-force
-or self.status == StatusValues.PENDING
-or (self.status == StatusValues.ERROR and self.is_error_cache_ttl_expired())
-or (self.status == StatusValues.COMPUTING and self.is_computing_stale())
-or (self.status == StatusValues.UPDATED and self._image is None)
-```
-
-Casos MC/DC principais:
-
-| Caso | Situação | Decisão esperada |
-| --- | --- | --- |
-| CT22 | `UPDATED` com imagem, `force=False` | F |
-| CT23 | mesmo estado, `force=True` | T |
-| CT24 | `PENDING` | T |
-| CT25 | `ERROR` com TTL expirado | T |
-| CT26 | `ERROR` sem TTL expirado | F |
-| CT27 | `COMPUTING` obsoleto | T |
-| CT28 | `COMPUTING` não obsoleto | F |
-| CT29 | `UPDATED` sem imagem | T |
-
-O baseline CT22 deixa os termos da decisão falsos. Os demais casos ativam uma
-condição ou subdecisão específica, permitindo observar seu efeito no resultado.
-
-## 7. Integração entre caixa-preta e caixa-branca
-
-A caixa-preta definiu classes de entrada com base no comportamento esperado:
-usuário autenticado/anônimo/ausente, ambiente com branch/SHA, usuário
-completo/incompleto, estados de cache e falha OAuth2.
-
-A caixa-branca complementou essa visão ao revelar os predicados internos que
-precisavam ser cobertos por MC/DC. Sem a leitura do código, seria fácil testar
-apenas casos comuns e deixar sem cobertura condições como usuário anônimo,
-usuário ausente, delimitador dentro de aspas ou `ERROR` sem TTL expirado.
-
-| Lacuna funcional | Complemento estrutural |
-| --- | --- |
-| Usuário autenticado seria testado, mas usuário anônimo poderia ser tratado errado | MC/DC variou presença de `g.user` e `is_anonymous` |
-| Ter apenas branch ou apenas SHA muda o rótulo do ambiente | MC/DC variou branch e SHA separadamente |
-| Separar string por vírgula não cobre aspas e parênteses | MC/DC incluiu vírgula dentro de aspas e parênteses |
-| Testar usuário completo não cobre fallback para `username` | MC/DC variou nome e sobrenome |
-| Testar OAuth2 habilitado não cobre exceção que não exige OAuth2 | MC/DC variou a resposta de `needs_oauth2` |
-| Testar cache pendente não cobre estados `ERROR`, `COMPUTING` e `UPDATED` | MC/DC ativou cada termo da decisão |
-
-## 8. Rastreabilidade
-
-| Funcionalidade | Função/método | Teste |
-| --- | --- | --- |
-| Resolução do usuário atual | `get_current_user` | `test_get_current_user_mcdc_user_presence_decision` e `test_get_current_user_mcdc_anonymous_user_decision` |
-| Rótulo de ambiente de desenvolvimento | `get_dev_env_label` | `test_get_dev_env_label_mcdc_branch_and_sha_decision`, `test_get_dev_env_label_formats_branch_and_sha` e `test_get_dev_env_label_prefers_github_environment` |
-| Label de usuário | `user_label` | `test_user_label_mcdc_full_name_decision` |
-| Split respeitando contexto | `split` | `test_split_mcdc_delimiter_decision` |
-| Detecção de OAuth2 | `check_for_oauth2` | `test_check_for_oauth2_mcdc_decision` |
-| Disparo de tarefa de screenshot | `ScreenshotCachePayload.should_trigger_task` | `test_screenshot_payload_should_trigger_task_mcdc_decision` |
-| Melhoria por TDD | `modify_url_query` | `test_modify_url_query_preserves_repeated_existing_parameters` e `test_modify_url_query_adds_list_values_as_repeated_parameters` |
-
-## 9. Métricas e evidências de cobertura
-
-Foi realizada checagem sintática dos arquivos alterados:
+Com o ambiente de desenvolvimento do Superset configurado:
 
 ```bash
-python3 -m py_compile superset/utils/urls.py tests/unit_tests/utils/conftest.py tests/unit_tests/utils/urls_tests.py tests/unit_tests/utils/version_tests.py tests/unit_tests/utils/ptoss_unitarios_test.py
+PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python3 -m pytest \
+  --confcutdir=tests/unit_tests/utils \
+  tests/unit_tests/utils/urls_tests.py \
+  tests/unit_tests/utils/version_tests.py \
+  -q
 ```
 
-Resultado: comando executado com sucesso.
-
-Os testes não puderam ser executados neste ambiente porque as dependências de
-desenvolvimento do Superset não estão instaladas:
-
-```text
-/usr/bin/python3: No module named pytest
-ModuleNotFoundError: No module named 'werkzeug'
-ModuleNotFoundError: No module named 'coverage'
-/bin/bash: line 1: pre-commit: command not found
-```
-
-O health check do Superset também falhou porque o servidor local não estava em
-execução:
+Para executar apenas os testes do PR de URLs:
 
 ```bash
-curl -f http://localhost:8088/health
+PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python3 -m pytest \
+  --confcutdir=tests/unit_tests/utils \
+  tests/unit_tests/utils/urls_tests.py \
+  -q
 ```
 
-Resultado:
+Para executar apenas os testes do PR de versionamento:
+
+```bash
+PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python3 -m pytest \
+  --confcutdir=tests/unit_tests/utils \
+  tests/unit_tests/utils/version_tests.py \
+  -q
+```
+
+Antes de enviar branches para o fork de entrega ou abrir PR no Superset:
+
+```bash
+pre-commit run --all-files
+```
+
+### Execução no GitHub Actions
+
+No fork da equipe, a branch `ptoss-2-tdd-cycles` contém o workflow:
 
 ```text
-Failed to connect to localhost port 8088
+.github/workflows/ptoss-backend-tests.yml
 ```
 
-No GitHub Actions, o workflow `.github/workflows/ptoss-backend-tests.yml`
-executa os testes da atividade com cobertura. A cobertura pode ser consultada
-em três lugares:
+Ele pode ser usado para executar os testes e gerar os relatórios de cobertura.
+O workflow gera o artefato:
 
-| Local | Evidência |
-| --- | --- |
-| Log do job | Saída `term-missing` do `pytest-cov` |
-| Resumo da execução | Bloco `PTOSS coverage` no `Summary` da run |
-| Artefatos | `ptoss-coverage-reports`, contendo `coverage.xml` e `htmlcov/` |
+```text
+ptoss-coverage-reports
+```
 
-Para baixar o relatório HTML: GitHub > repositório > Actions > execução
-`PTOSS Backend Tests` > seção `Artifacts` > `ptoss-coverage-reports`. Depois,
-abra `htmlcov/index.html`.
+Esse artefato contém:
 
-Resultado obtido no GitHub Actions na execução anterior:
+```text
+coverage.xml
+htmlcov/index.html
+```
+
+## Relatórios de Cobertura
+
+A cobertura é gerada pelo workflow `PTOSS Backend Tests` usando `pytest-cov`.
+Os relatórios ficam disponíveis como artefato da execução do GitHub Actions.
+
+Resultado registrado em execução anterior do workflow:
 
 | Arquivo | Stmts | Miss | Branch | BrPart | Cobertura |
 | --- | ---: | ---: | ---: | ---: | ---: |
@@ -447,451 +143,53 @@ Resultado obtido no GitHub Actions na execução anterior:
 | `superset/utils/version.py` | 39 | 21 | 14 | 1 | 47% |
 | Total dos módulos instrumentados | 1437 | 892 | 462 | 2 | 30% |
 
-Após a inclusão de `tests/unit_tests/utils/version_tests.py`, a próxima execução
-do workflow deve gerar novos percentuais no artefato de cobertura.
+Como consultar o relatório:
 
-Essa métrica é calculada sobre arquivos inteiros do Superset, muitos deles com
-centenas de linhas e funções não selecionadas para a atividade. Por isso, o
-percentual total de 30% não representa a cobertura completa do backend nem a
-cobertura das decisões analisadas por MC/DC. A evidência específica de MC/DC
-está nas tabelas de casos de teste dos métodos M1 a M6, onde cada condição
-atômica das decisões selecionadas é variada independentemente.
+1. Acessar o fork da equipe no GitHub.
+2. Abrir a aba `Actions`.
+3. Selecionar a execução do workflow `PTOSS Backend Tests`.
+4. Baixar o artefato `ptoss-coverage-reports`.
+5. Abrir `htmlcov/index.html` ou consultar `coverage.xml`.
 
-O workflow usa `--confcutdir=tests/unit_tests/utils` para não carregar o
-`tests/conftest.py` global do Superset, pois esse arquivo inicializa a aplicação
-inteira e não é necessário para os testes unitários da atividade. O
-`tests/unit_tests/utils/conftest.py` local usa stubs para impedir a execução do
-`superset/__init__.py` pesado e para evitar dependências nativas como `nh3` e
-`cryptography`, que são importadas no bootstrap do projeto, mas não são
-exercitadas pelos métodos testados.
+## Histórico de Commits
 
-Com o ambiente local configurado, o comando equivalente é:
+### Branch `fix/modify-url-query-repeated-params`
 
-```bash
-PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python3 -m pytest \
-  -p pytest_cov.plugin \
-  --confcutdir=tests/unit_tests/utils \
-  tests/unit_tests/utils/ptoss_unitarios_test.py \
-  tests/unit_tests/utils/urls_tests.py \
-  tests/unit_tests/utils/version_tests.py \
-  --cov=superset.tasks.utils \
-  --cov=superset.utils.core \
-  --cov=superset.utils.oauth2 \
-  --cov=superset.utils.screenshots \
-  --cov=superset.utils.version \
-  --cov=superset.utils.urls \
-  --cov-branch \
-  --cov-report=term-missing \
-  --cov-report=xml:coverage.xml \
-  --cov-report=html:htmlcov
-```
-
-## 10. Processo de TDD
-
-### Descrição do Item Desenvolvido
-
-A funcionalidade escolhida para TDD foi uma melhoria em
-`modify_url_query`, localizada em `superset/utils/urls.py`.
-
-A função recebe uma URL e substitui ou adiciona parâmetros de query string. A
-implementação anterior usava `parse_qs`, mas reconstruía a query usando apenas o
-primeiro valor de cada chave. Com isso, parâmetros repetidos eram perdidos.
-
-Exemplo do problema:
-
-```text
-Entrada:
-http://localhost:9000/explore/?filter=a&filter=b
-
-Operação:
-modify_url_query(url, standalone="1")
-
-Resultado esperado:
-http://localhost:9000/explore/?filter=a&filter=b&standalone=1
-```
-
-O objetivo da melhoria foi preservar todos os valores da query string e também
-permitir que novos parâmetros enviados como lista fossem serializados como
-parâmetros repetidos.
-
-### Ciclos
-
-O processo foi organizado em dois ciclos incrementais de TDD. Cada ciclo contém
-as etapas Red, Green e Refactor. Não foi criado um terceiro comportamento
-funcional; o "N-ésimo ciclo" aparece como consolidação do processo após o
-segundo ciclo.
-
-| Ciclo | Red | Green | Refactor |
-| --- | --- | --- | --- |
-| Primeiro ciclo | Teste para preservar `filter=a&filter=b` | Implementação passa a percorrer todos os valores de cada chave | Organização da montagem da query sem voltar a usar apenas `v[0]` |
-| Segundo ciclo | Teste para `tag=["alpha value", "beta/value"]` | Implementação trata valores simples e listas com a mesma estrutura interna | Uso de `urllib.parse.urlencode(..., doseq=True)` |
-| N-ésimo ciclo | Sem novo requisito funcional | Testes anteriores continuam aprovados | Consolidação da solução final para PR |
-
-### Execução
-
-O comando usado para validar a funcionalidade isolada é:
-
-```bash
-PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python3 -m pytest \
-  --confcutdir=tests/unit_tests/utils \
-  tests/unit_tests/utils/urls_tests.py \
-  -q
-```
-
-Na branch destinada ao Pull Request do Superset, esses testes devem rodar junto
-com a pipeline padrão do projeto. Antes do envio ao repositório oficial, também
-deve ser executado:
-
-```bash
-pre-commit run --all-files
-```
-
-### Primeiro Ciclo
-
-Descrição: garantir que a função não perca parâmetros repetidos que já existem
-na URL original.
-
-#### Red
-
-Foi criado o teste abaixo antes da alteração da implementação:
-
-```python
-def test_modify_url_query_preserves_repeated_existing_parameters() -> None:
-    test_url = modify_url_query(
-        "http://localhost:9000/explore/?filter=a&filter=b",
-        standalone="1",
-    )
-
-    assert test_url == "http://localhost:9000/explore/?filter=a&filter=b&standalone=1"
-```
-
-Na implementação anterior, o teste falharia porque a reconstrução da query
-usava apenas `v[0]`, removendo o segundo valor de `filter`.
-
-Trecho relevante da implementação no estado Red:
-
-```python
-parts = list(urllib.parse.urlsplit(url))
-params = urllib.parse.parse_qs(parts[3])
-for k, v in kwargs.items():
-    if not isinstance(v, list):
-        v = [v]
-    params[k] = v
-
-parts[3] = "&".join(
-    f"{k}={urllib.parse.quote(str(v[0]))}" for k, v in params.items()
-)
-return urllib.parse.urlunsplit(parts)
-```
-
-Com esse código, uma query como `filter=a&filter=b` era reconstruída usando
-apenas `filter=a`.
-
-#### Green
-
-A implementação passou a tratar todos os valores retornados por `parse_qs`,
-preservando a lista completa associada a cada chave da query string. Com isso,
-o cenário `filter=a&filter=b` passou a ser mantido no resultado final.
-
-Código mínimo do primeiro Green:
-
-```python
-parts = list(urllib.parse.urlsplit(url))
-params = urllib.parse.parse_qs(parts[3])
-for k, v in kwargs.items():
-    if not isinstance(v, list):
-        v = [v]
-    params[k] = v
-
-query_parts = []
-for k, values in params.items():
-    if k in kwargs:
-        query_parts.append(f"{k}={urllib.parse.quote(str(values[0]))}")
-    else:
-        query_parts.extend(
-            f"{k}={urllib.parse.quote(str(value))}" for value in values
-        )
-
-parts[3] = "&".join(query_parts)
-return urllib.parse.urlunsplit(parts)
-```
-
-Esse código era suficiente para o primeiro teste, pois preservava os valores
-repetidos que já vinham da URL original.
-
-#### Refactor
-
-Após o teste passar, a implementação foi organizada para manter uma estrutura
-única de listas de valores por chave. A refatoração deste primeiro ciclo evitou
-retornar ao comportamento antigo de selecionar apenas o primeiro elemento da
-lista, preparando a função para receber mais cenários de múltiplos valores.
-
-### Segundo Ciclo
-
-Descrição: garantir que novos parâmetros informados como lista sejam adicionados
-como parâmetros repetidos na URL.
-
-#### Red
-
-Foi criado um segundo teste para ampliar o comportamento da função:
-
-```python
-def test_modify_url_query_adds_list_values_as_repeated_parameters() -> None:
-    test_url = modify_url_query(
-        "http://localhost:9000/explore/?existing=ok",
-        tag=["alpha value", "beta/value"],
-    )
-
-    assert (
-        test_url
-        == "http://localhost:9000/explore/?existing=ok"
-        "&tag=alpha%20value&tag=beta/value"
-    )
-```
-
-Esse teste verifica dois pontos: listas devem ser serializadas como parâmetros
-repetidos, e o encoding deve continuar compatível com o comportamento existente
-da função.
-
-No código mínimo do primeiro ciclo, esse teste ainda falharia porque valores
-novos vindos de `kwargs` ainda eram serializados usando apenas o primeiro item
-da lista.
-
-#### Green
-
-A implementação passou a manter os valores em lista quando o argumento já chega
-como lista e a encapsular valores simples em lista. Assim, a mesma estrutura
-interna é usada tanto para parâmetros existentes quanto para novos parâmetros.
-
-Código do segundo Green:
-
-```python
-parts = list(urllib.parse.urlsplit(url))
-params = urllib.parse.parse_qs(parts[3])
-for k, v in kwargs.items():
-    if not isinstance(v, list):
-        v = [v]
-    params[k] = v
-
-query_parts = []
-for k, values in params.items():
-    query_parts.extend(
-        f"{k}={urllib.parse.quote(str(value))}" for value in values
-    )
-
-parts[3] = "&".join(query_parts)
-return urllib.parse.urlunsplit(parts)
-```
-
-Com essa alteração, tanto parâmetros repetidos já presentes na URL quanto listas
-novas passadas por argumento passaram a ser serializados da mesma forma.
-
-#### Refactor
-
-A montagem manual da query string foi substituída por
-`urllib.parse.urlencode`, usando `doseq=True`.
-
-```python
-parts[3] = urllib.parse.urlencode(
-    params,
-    doseq=True,
-    quote_via=urllib.parse.quote,
-    safe="/",
-)
-```
-
-Essa refatoração manteve os testes dos dois ciclos aprovados e deixou a
-implementação apoiada em uma API da biblioteca padrão, reduzindo risco de erro
-em casos de encoding.
-
-### N-ésimo Ciclo
-
-Não houve um terceiro requisito funcional além dos dois comportamentos
-desenvolvidos. Assim, o N-ésimo ciclo foi tratado como consolidação: executar
-novamente os testes dos ciclos anteriores, confirmar que a refatoração não
-alterou o comportamento e preparar a versão final para o Pull Request.
-
-### Código Fonte Testes
-
-Os testes desenvolvidos para o TDD ficam em
-`tests/unit_tests/utils/urls_tests.py`.
-
-```python
-def test_modify_url_query_preserves_repeated_existing_parameters() -> None:
-    test_url = modify_url_query(
-        "http://localhost:9000/explore/?filter=a&filter=b",
-        standalone="1",
-    )
-
-    assert test_url == "http://localhost:9000/explore/?filter=a&filter=b&standalone=1"
-
-
-def test_modify_url_query_adds_list_values_as_repeated_parameters() -> None:
-    test_url = modify_url_query(
-        "http://localhost:9000/explore/?existing=ok",
-        tag=["alpha value", "beta/value"],
-    )
-
-    assert (
-        test_url
-        == "http://localhost:9000/explore/?existing=ok"
-        "&tag=alpha%20value&tag=beta/value"
-    )
-```
-
-### Resultado Final Execução Testes
-
-Resultado esperado da execução dos testes da funcionalidade:
-
-```text
-tests/unit_tests/utils/urls_tests.py ..... passed
-```
-
-No ambiente local usado para redigir o relatório, a execução completa dos testes
-depende das bibliotecas de desenvolvimento do Superset. Por isso, a validação
-final deve ser consultada no GitHub Actions do fork e, para o Pull Request
-oficial, na própria pipeline do Apache Superset.
-
-### Código Fonte da Funcionalidade Implementada
-
-Arquivo: `superset/utils/urls.py`.
-
-```python
-def modify_url_query(url: str, **kwargs: Any) -> str:
-    """
-    Replace or add parameters to a URL.
-    """
-    parts = list(urllib.parse.urlsplit(url))
-    params = urllib.parse.parse_qs(parts[3])
-    for k, v in kwargs.items():
-        if not isinstance(v, list):
-            v = [v]
-        params[k] = v
-
-    parts[3] = urllib.parse.urlencode(
-        params,
-        doseq=True,
-        quote_via=urllib.parse.quote,
-        safe="/",
-    )
-    return urllib.parse.urlunsplit(parts)
-```
-
-### Pull Request
-
-A alteração de TDD foi preparada para uma branch limpa voltada ao repositório
-oficial do Superset, contendo apenas:
-
-| Arquivo | Papel no PR |
+| Commit | Papel no processo |
 | --- | --- |
-| `superset/utils/urls.py` | Implementação da melhoria |
-| `tests/unit_tests/utils/urls_tests.py` | Testes unitários que evidenciam os ciclos de TDD |
+| `f148b2f7af test: add failing tests for repeated URL query params` | Red: testes falhando para parâmetros repetidos |
+| `4132e0bff6 fix: preserve repeated query params in modify_url_query` | Green: implementação mínima da correção |
+| `dac2465266 refactor: use urlencode doseq for query serialization` | Refactor: troca de montagem manual por `urlencode(..., doseq=True)` |
+| `d94d0f3a3e style: format URL tests` | Ajuste de formatação exigido pelo pre-commit |
 
-Título sugerido do PR:
+### Branch `test/get-dev-env-label`
 
-```text
-fix(urls): preserve repeated query parameters
-```
-
-Os arquivos específicos da atividade, como `PTOSS-2-respostas.md`, workflow de
-cobertura da disciplina e testes auxiliares de MC/DC, não fazem parte do PR
-oficial, pois são evidências acadêmicas e não mudanças necessárias ao projeto
-Apache Superset.
-
-| Item exigido | Evidência no ciclo TDD |
+| Commit | Papel no processo |
 | --- | --- |
-| Evolução dos testes | O primeiro ciclo adiciona um teste para parâmetros repetidos já existentes; o segundo adiciona teste para listas recebidas como entrada nova |
-| Evolução da implementação | A função deixa de usar apenas o primeiro valor da lista e passa a preservar todos os valores da query |
-| Refatorações realizadas | A montagem manual da query foi substituída por `urllib.parse.urlencode` com `doseq=True` |
-| Dificuldades observadas | Foi necessário preservar o comportamento de encoding e, ao mesmo tempo, não perder valores repetidos |
-| Benefícios observados | Os testes descrevem o defeito de forma objetiva e protegem a função contra regressões em URLs com múltiplos valores |
+| `27842d3f9c test: cover development environment label` | Teste unitário para `get_dev_env_label` |
 
-## 11. Análise crítica
+### Branch `ptoss-2-tdd-cycles`
 
-O principal aprendizado foi que nem todo método é adequado para MC/DC. Métodos
-com apenas branches simples devem ser avaliados com cobertura de branches, mas
-não sustentam a análise de independência de condições exigida pelo MC/DC.
-
-A nova seleção ficou mais defensável porque cada função contém pelo menos uma
-decisão composta. A caixa-preta ajudou a escolher entradas representativas; a
-caixa-branca mostrou quais condições deveriam variar independentemente.
-
-A testabilidade do Superset é boa em funções utilitárias pequenas, mas sistemas
-reais trazem acoplamentos de ambiente. Algumas importações dependem de Flask,
-Werkzeug, cache, configuração de aplicação e bibliotecas opcionais. Por isso, a
-virtualenv correta é necessária para executar a suíte.
-
-O TDD em `modify_url_query` mostrou valor prático: o teste descreveu uma perda
-real de comportamento, e a implementação ficou mais simples ao usar
-`urllib.parse.urlencode` com `doseq=True`.
-
-Lições aprendidas pela equipe:
-
-| Tema | Reflexão |
+| Commit | Papel no processo |
 | --- | --- |
-| Complementaridade | Caixa-preta ajuda a pensar no comportamento; caixa-branca revela condições internas esquecidas |
-| Testabilidade | Funções utilitárias pequenas são mais testáveis que trechos acoplados a Flask, banco ou cache |
-| Sistemas reais | Dependências, configuração e importações tornam a execução local mais difícil |
-| Limitações | MC/DC não é adequado para métodos sem decisão composta e não substitui testes de integração |
-| TDD | Escrever o teste primeiro deixou o defeito de `modify_url_query` mais claro e guiou uma correção menor |
+| `632fea21ec test: add failing tests for repeated URL query params` | Início do TDD para `modify_url_query` |
+| `4209369c15 fix: preserve repeated query params in modify_url_query` | Implementação da correção |
+| `6969bdf43d refactor: use urlencode doseq for query serialization` | Refatoração mantendo testes aprovados |
+| `fe0f9cb453 test: add PTOSS MC/DC unit tests` | Testes unitários adicionais da atividade |
+| `c5343d098e ci: add PTOSS backend coverage workflow` | Workflow de execução e cobertura |
+| `f74ec5d6d8 test: cover development environment label` | Teste de versionamento incluído na branch da atividade |
+| `4bc2e14cc3 ci: include version tests in PTOSS workflow` | Inclusão dos testes de versionamento no workflow |
+| `5e04b76bce docs: detail TDD cycles` | Registro intermediário dos ciclos de TDD |
+| `docs: simplify PTOSS repository artifacts` | Documentação final dos artefatos da entrega |
 
-## 12. Conclusão
-
-A atividade aplicou testes unitários em 6 métodos compatíveis com MC/DC, além de
-uma melhoria desenvolvida por TDD. A seleção final evita forçar MC/DC em métodos
-sem decisão composta e torna explícita a relação entre condições, casos de teste
-e resultados esperados.
-
-Como próximos passos, a equipe deve executar o workflow no fork, anexar ou
-referenciar o artefato de cobertura gerado e rodar `pre-commit run --all-files`
-antes de entregar ou enviar alterações.
-
-## 13. Instruções de execução
-
-Com o ambiente configurado:
+## Branches a Enviar ao Fork de Entrega
 
 ```bash
-PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python3 -m pytest \
-  --confcutdir=tests/unit_tests/utils \
-  tests/unit_tests/utils/ptoss_unitarios_test.py \
-  tests/unit_tests/utils/urls_tests.py \
-  tests/unit_tests/utils/version_tests.py \
-  -q
+git push -u entrega ptoss-2-tdd-cycles
+git push -u entrega fix/modify-url-query-repeated-params
+git push -u entrega test/get-dev-env-label
 ```
 
-Para cobertura:
-
-```bash
-PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python3 -m pytest \
-  -p pytest_cov.plugin \
-  --confcutdir=tests/unit_tests/utils \
-  tests/unit_tests/utils/ptoss_unitarios_test.py \
-  tests/unit_tests/utils/urls_tests.py \
-  tests/unit_tests/utils/version_tests.py \
-  --cov=superset.tasks.utils \
-  --cov=superset.utils.core \
-  --cov=superset.utils.oauth2 \
-  --cov=superset.utils.screenshots \
-  --cov=superset.utils.version \
-  --cov=superset.utils.urls \
-  --cov-branch \
-  --cov-report=xml:coverage.xml \
-  --cov-report=html:htmlcov \
-  --cov-report=term-missing
-```
-
-Para executar no GitHub Actions:
-
-1. Envie as alterações para uma branch `ptoss-*` ou `feat/ptoss-*`.
-2. Acesse `Actions > PTOSS Backend Tests`.
-3. Abra a execução mais recente.
-4. Consulte o bloco `PTOSS coverage` no `Summary`.
-5. Baixe o artefato `ptoss-coverage-reports` para obter `coverage.xml` e
-   `htmlcov/index.html`.
-
-Antes de enviar alterações ao repositório:
-
-```bash
-git add .
-pre-commit run --all-files
-```
+A branch `ptoss-2-tdd-cycles` concentra a entrega da atividade. As branches
+`fix/modify-url-query-repeated-params` e `test/get-dev-env-label` devem ser
+mantidas separadas para abrir Pull Requests limpos no Apache Superset.
