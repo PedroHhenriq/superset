@@ -28,6 +28,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 from flask import Flask
 
+TASK_UTILS_MODULE = "superset.tasks.utils"
+
 
 def _module(name: str, **attrs: Any) -> types.ModuleType:
     mod = types.ModuleType(name)
@@ -51,6 +53,8 @@ def _stubbed_imports() -> Iterator[None]:
             TaskProperties=dict,
             TaskScope=MagicMock(),
         ),
+        "superset": _module("superset", __path__=[]),
+        "superset.tasks": _module("superset.tasks", __path__=[]),
         "superset.tasks.exceptions": _module(
             "superset.tasks.exceptions",
             ExecutorNotFoundError=Exception,
@@ -94,12 +98,13 @@ def _stubbed_imports() -> Iterator[None]:
 
 def _load_task_utils_module() -> types.ModuleType:
     path = pathlib.Path(__file__).parents[3] / "superset" / "tasks" / "utils.py"
-    spec = importlib.util.spec_from_file_location("ptoss_task_utils", path)
+    spec = importlib.util.spec_from_file_location(TASK_UTILS_MODULE, path)
     assert spec is not None
     assert spec.loader is not None
     mod = importlib.util.module_from_spec(spec)
 
     with _stubbed_imports():
+        sys.modules[TASK_UTILS_MODULE] = mod
         spec.loader.exec_module(mod)
 
     return mod

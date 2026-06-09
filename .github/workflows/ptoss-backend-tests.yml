@@ -6,7 +6,20 @@ on:
       test_paths:
         description: "Space-separated pytest paths for the PTOSS suite"
         required: false
-        default: "tests/unit_tests/utils/urls_tests.py tests/unit_tests/utils/version_tests.py tests/unit_tests/tasks/test_get_current_user.py tests/unit_tests/utils/test_split.py tests/unit_tests/utils/user_label_tests.py tests/unit_tests/utils/oauth2_tests.py tests/unit_tests/utils/test_screenshot_cache_fix.py"
+        default: >-
+          tests/unit_tests/utils/urls_tests.py
+          tests/unit_tests/utils/version_tests.py
+          tests/unit_tests/tasks/test_get_current_user.py
+          tests/unit_tests/utils/test_split.py
+          tests/unit_tests/utils/user_label_tests.py
+          tests/unit_tests/utils/oauth2_tests.py::test_check_for_oauth2_no_exception_no_action
+          tests/unit_tests/utils/oauth2_tests.py::test_check_for_oauth2_disabled_exception_propagated
+          tests/unit_tests/utils/oauth2_tests.py::test_check_for_oauth2_enabled_but_not_needed
+          tests/unit_tests/utils/oauth2_tests.py::test_check_for_oauth2_enabled_and_needed_starts_dance
+          tests/unit_tests/utils/oauth2_tests.py::test_check_for_oauth2_exception_always_reraised
+          tests/unit_tests/utils/oauth2_tests.py::test_check_for_oauth2_disabled_and_not_needed
+          tests/unit_tests/utils/oauth2_tests.py::test_check_for_oauth2_preserves_exception_type
+          tests/unit_tests/utils/test_screenshot_cache_fix.py
       coverage_modules:
         description: "Space-separated Python modules to include in coverage"
         required: false
@@ -44,7 +57,20 @@ jobs:
       PYTEST_DISABLE_PLUGIN_AUTOLOAD: "1"
       SUPERSET_TESTENV: true
       SUPERSET_SECRET_KEY: not-a-secret
-      DEFAULT_PTOSS_TEST_PATHS: "tests/unit_tests/utils/urls_tests.py tests/unit_tests/utils/version_tests.py tests/unit_tests/tasks/test_get_current_user.py tests/unit_tests/utils/test_split.py tests/unit_tests/utils/user_label_tests.py tests/unit_tests/utils/oauth2_tests.py tests/unit_tests/utils/test_screenshot_cache_fix.py"
+      DEFAULT_PTOSS_TEST_PATHS: >-
+        tests/unit_tests/utils/urls_tests.py
+        tests/unit_tests/utils/version_tests.py
+        tests/unit_tests/tasks/test_get_current_user.py
+        tests/unit_tests/utils/test_split.py
+        tests/unit_tests/utils/user_label_tests.py
+        tests/unit_tests/utils/oauth2_tests.py::test_check_for_oauth2_no_exception_no_action
+        tests/unit_tests/utils/oauth2_tests.py::test_check_for_oauth2_disabled_exception_propagated
+        tests/unit_tests/utils/oauth2_tests.py::test_check_for_oauth2_enabled_but_not_needed
+        tests/unit_tests/utils/oauth2_tests.py::test_check_for_oauth2_enabled_and_needed_starts_dance
+        tests/unit_tests/utils/oauth2_tests.py::test_check_for_oauth2_exception_always_reraised
+        tests/unit_tests/utils/oauth2_tests.py::test_check_for_oauth2_disabled_and_not_needed
+        tests/unit_tests/utils/oauth2_tests.py::test_check_for_oauth2_preserves_exception_type
+        tests/unit_tests/utils/test_screenshot_cache_fix.py
       DEFAULT_PTOSS_COVERAGE_MODULES: "superset.utils.urls superset.utils.version superset.tasks.utils superset.utils.core superset.utils.oauth2 superset.utils.screenshots"
       PTOSS_TEST_PATHS: ${{ github.event.inputs.test_paths }}
       PTOSS_COVERAGE_MODULES: ${{ github.event.inputs.coverage_modules }}
