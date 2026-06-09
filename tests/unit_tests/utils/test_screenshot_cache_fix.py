@@ -281,6 +281,15 @@ class TestShouldTriggerTask:
         payload_computing = ScreenshotCachePayload(status=StatusValues.COMPUTING)
         assert payload_computing.should_trigger_task(force=True) is True
 
+    def test_no_trigger_when_all_conditions_false(self):
+        """Test that all false conditions result in False."""
+        payload = ScreenshotCachePayload(
+            image=b"valid_image",
+            status=StatusValues.UPDATED,
+        )
+
+        assert payload.should_trigger_task(force=False) is False
+
 
 class TestIsComputingStale:
     """Test the is_computing_stale method."""

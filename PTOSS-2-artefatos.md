@@ -20,8 +20,8 @@ under the License.
 # PTOSS-2: Artefatos dos Pull Requests
 
 Este documento registra os artefatos mantidos nesta branch de entrega. A branch
-foi reduzida para conter apenas os itens relacionados aos Pull Requests
-principais, além do workflow usado para gerar evidências de execução e
+contém os itens relacionados aos Pull Requests principais, os testes unitários
+integrados da equipe e o workflow usado para gerar evidências de execução e
 cobertura no fork.
 
 ## Pull Requests
@@ -46,6 +46,15 @@ Links dos PRs oficiais no Apache Superset:
 | `tests/unit_tests/utils/urls_tests.py` | testes de `modify_url_query` | Testes do PR de correção |
 | `superset/utils/version.py` | `get_dev_env_label` | Código existente exercitado por teste novo |
 | `tests/unit_tests/utils/version_tests.py` | testes de `get_dev_env_label` | Testes do PR de cobertura unitária |
+| `superset/tasks/utils.py` | `get_current_user` | Código exercitado por teste da equipe |
+| `tests/unit_tests/tasks/test_get_current_user.py` | testes de `get_current_user` | Testes unitários da equipe |
+| `superset/utils/core.py` | `split` e `user_label` | Código exercitado por testes da equipe |
+| `tests/unit_tests/utils/test_split.py` | testes de `split` | Testes unitários da equipe |
+| `tests/unit_tests/utils/user_label_tests.py` | testes de `user_label` | Testes unitários da equipe |
+| `superset/utils/oauth2.py` | `check_for_oauth2` | Código exercitado por teste da equipe |
+| `tests/unit_tests/utils/oauth2_tests.py` | testes de `check_for_oauth2` | Testes unitários da equipe |
+| `superset/utils/screenshots.py` | `ScreenshotCachePayload.should_trigger_task` | Código exercitado por teste da equipe |
+| `tests/unit_tests/utils/test_screenshot_cache_fix.py` | testes de screenshots | Testes unitários da equipe |
 | `.github/workflows/ptoss-backend-tests.yml` | workflow de CI | Execução dos testes dos PRs com cobertura no fork |
 
 ## Testes Implementados
@@ -56,6 +65,11 @@ Links dos PRs oficiais no Apache Superset:
 | `test_modify_url_query_adds_list_values_as_repeated_parameters` | `tests/unit_tests/utils/urls_tests.py` | Verifica que valores recebidos como lista são serializados como parâmetros repetidos |
 | `test_get_dev_env_label_formats_branch_and_sha` | `tests/unit_tests/utils/version_tests.py` | Verifica combinações de branch e SHA presentes ou ausentes |
 | `test_get_dev_env_label_prefers_github_environment` | `tests/unit_tests/utils/version_tests.py` | Verifica precedência das variáveis de ambiente do GitHub sobre valores locais |
+| `TestGetCurrentUser` | `tests/unit_tests/tasks/test_get_current_user.py` | Verifica casos de usuário ausente, anônimo, autenticado e nomes de usuário de borda |
+| `test_branch_*` e `test_split_*` | `tests/unit_tests/utils/test_split.py` | Verificam casos de caixa-preta e caixa-branca da função `split` |
+| `TestUserLabel*` | `tests/unit_tests/utils/user_label_tests.py` | Verifica partições, valores limite e MC/DC de `user_label` |
+| `test_check_for_oauth2_*` | `tests/unit_tests/utils/oauth2_tests.py` | Verifica combinações da decisão de disparo do fluxo OAuth2 |
+| `test_no_trigger_when_all_conditions_false` | `tests/unit_tests/utils/test_screenshot_cache_fix.py` | Verifica cenário em que nenhuma condição dispara nova tarefa de screenshot |
 
 ## Instruções de Execução
 
@@ -68,10 +82,15 @@ PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python3 -m pytest \
   --confcutdir=tests/unit_tests/utils \
   tests/unit_tests/utils/urls_tests.py \
   tests/unit_tests/utils/version_tests.py \
+  tests/unit_tests/tasks/test_get_current_user.py \
+  tests/unit_tests/utils/test_split.py \
+  tests/unit_tests/utils/user_label_tests.py \
+  tests/unit_tests/utils/oauth2_tests.py \
+  tests/unit_tests/utils/test_screenshot_cache_fix.py \
   -q
 ```
 
-Execução local com cobertura dos módulos dos PRs:
+Execução local com cobertura dos módulos selecionados:
 
 ```bash
 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python3 -m pytest \
@@ -79,8 +98,17 @@ PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python3 -m pytest \
   --confcutdir=tests/unit_tests/utils \
   tests/unit_tests/utils/urls_tests.py \
   tests/unit_tests/utils/version_tests.py \
+  tests/unit_tests/tasks/test_get_current_user.py \
+  tests/unit_tests/utils/test_split.py \
+  tests/unit_tests/utils/user_label_tests.py \
+  tests/unit_tests/utils/oauth2_tests.py \
+  tests/unit_tests/utils/test_screenshot_cache_fix.py \
   --cov=superset.utils.urls \
   --cov=superset.utils.version \
+  --cov=superset.tasks.utils \
+  --cov=superset.utils.core \
+  --cov=superset.utils.oauth2 \
+  --cov=superset.utils.screenshots \
   --cov-branch \
   --cov-report=term-missing \
   --cov-report=xml:coverage.xml \
@@ -111,7 +139,6 @@ tests/unit_tests/utils/test_split.py
 tests/unit_tests/utils/user_label_tests.py
 tests/unit_tests/utils/oauth2_tests.py
 tests/unit_tests/utils/test_screenshot_cache_fix.py
-tests/unit_tests/utils/cohort_tests.py
 ```
 
 E mede cobertura de:
@@ -123,7 +150,6 @@ superset.tasks.utils
 superset.utils.core
 superset.utils.oauth2
 superset.utils.screenshots
-superset.utils.cohort
 ```
 
 O workflow ignora caminhos de teste e módulos de cobertura que ainda não
@@ -164,7 +190,6 @@ Resultado da cobertura dos PRs principais e dos testes integrados:
 | `superset/utils/core.py` | A preencher | A preencher | A preencher | A preencher | A preencher |
 | `superset/utils/oauth2.py` | A preencher | A preencher | A preencher | A preencher | A preencher |
 | `superset/utils/screenshots.py` | A preencher | A preencher | A preencher | A preencher | A preencher |
-| `superset/utils/cohort.py` | A preencher | A preencher | A preencher | A preencher | A preencher |
 | Total dos módulos instrumentados | A preencher | A preencher | A preencher | A preencher | A preencher |
 
 Após a execução do workflow, substituir os campos `A preencher` pelos valores
@@ -211,7 +236,6 @@ fork de entrega são:
 | `user_label` | `entrega/test/add-user-label-tests` | `tests/unit_tests/utils/user_label_tests.py` |
 | `check_for_oauth2` | `entrega/test/unit-tests-check-for-oauth2` | `tests/unit_tests/utils/oauth2_tests.py` |
 | `ScreenshotCachePayload.should_trigger_task` | `entrega/test/should_trigger_task` | `tests/unit_tests/utils/test_screenshot_cache_fix.py` |
-| `cohort` | `entrega/test/add-user-label-tests` | `tests/unit_tests/utils/cohort_tests.py` |
 
 Como algumas branches estão em bases diferentes do repositório, a integração
 mais segura é trazer apenas os arquivos/commits de teste necessários, evitando

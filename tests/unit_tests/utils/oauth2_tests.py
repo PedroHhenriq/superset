@@ -21,6 +21,7 @@ import base64
 import hashlib
 from datetime import datetime
 from typing import cast
+from unittest.mock import MagicMock
 
 import pytest
 from freezegun import freeze_time
@@ -28,6 +29,7 @@ from pytest_mock import MockerFixture
 
 from superset.superset_typing import OAuth2ClientConfig
 from superset.utils.oauth2 import (
+    check_for_oauth2,
     decode_oauth2_state,
     encode_oauth2_state,
     generate_code_challenge,
@@ -558,3 +560,78 @@ def test_get_oauth2_redirect_uri_raises_on_runtime_error(
     )
     with pytest.raises(OAuth2Error):
         get_oauth2_redirect_uri()
+
+
+def make_database(oauth2_enabled: bool, needs_oauth2_result: bool) -> MagicMock:
+    database = MagicMock()
+    database.is_oauth2_enabled.return_value = oauth2_enabled
+    database.db_engine_spec.needs_oauth2.return_value = needs_oauth2_result
+    return database
+
+
+def test_check_for_oauth2_no_exception_no_action() -> None:
+    database = make_database(oauth2_enabled=True, needs_oauth2_result=True)
+
+    with check_for_oauth2(database):
+        pass
+
+    database.db_engine_spec.start_oauth2_dance.assert_not_called()
+
+
+def test_check_for_oauth2_disabled_exception_propagated() -> None:
+    database = make_database(oauth2_enabled=False, needs_oauth2_result=True)
+
+    with pytest.raises(RuntimeError):
+        with check_for_oauth2(database):
+            raise RuntimeError("generic error")
+
+    database.db_engine_spec.start_oauth2_dance.assert_not_called()
+
+
+def test_check_for_oauth2_enabled_but_not_needed() -> None:
+    database = make_database(oauth2_enabled=True, needs_oauth2_result=False)
+
+    with pytest.raises(ValueError):
+        with check_for_oauth2(database):
+            raise ValueError("other error")
+
+    database.db_engine_spec.start_oauth2_dance.assert_not_called()
+
+
+def test_check_for_oauth2_enabled_and_needed_starts_dance() -> None:
+    database = make_database(oauth2_enabled=True, needs_oauth2_result=True)
+
+    with pytest.raises(Exception):  # noqa: B017, PT011
+        with check_for_oauth2(database):
+            raise Exception("oauth2 required")
+
+    database.db_engine_spec.start_oauth2_dance.assert_called_once_with(database)
+
+
+def test_check_for_oauth2_exception_always_reraised() -> None:
+    database = make_database(oauth2_enabled=True, needs_oauth2_result=True)
+    original = RuntimeError("original")
+
+    with pytest.raises(RuntimeError) as exc_info:
+        with check_for_oauth2(database):
+            raise original
+
+    assert exc_info.value is original
+
+
+def test_check_for_oauth2_disabled_and_not_needed() -> None:
+    database = make_database(oauth2_enabled=False, needs_oauth2_result=False)
+
+    with pytest.raises(KeyError):
+        with check_for_oauth2(database):
+            raise KeyError("key")
+
+    database.db_engine_spec.start_oauth2_dance.assert_not_called()
+
+
+def test_check_for_oauth2_preserves_exception_type() -> None:
+    database = make_database(oauth2_enabled=False, needs_oauth2_result=False)
+
+    with pytest.raises(TypeError):
+        with check_for_oauth2(database):
+            raise TypeError("wrong type")
