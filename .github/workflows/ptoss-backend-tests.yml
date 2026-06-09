@@ -2,6 +2,15 @@ name: PTOSS Backend Tests
 
 on:
   workflow_dispatch:
+    inputs:
+      test_paths:
+        description: "Space-separated pytest paths for the PTOSS suite"
+        required: false
+        default: "tests/unit_tests/utils/ptoss_unitarios_test.py tests/unit_tests/utils/urls_tests.py tests/unit_tests/utils/version_tests.py"
+      coverage_modules:
+        description: "Space-separated Python modules to include in coverage"
+        required: false
+        default: "superset.tasks.utils superset.utils.core superset.utils.oauth2 superset.utils.screenshots superset.utils.urls superset.utils.version"
   push:
     branches:
       - "ptoss-*"
@@ -28,6 +37,10 @@ jobs:
       PYTEST_DISABLE_PLUGIN_AUTOLOAD: "1"
       SUPERSET_TESTENV: true
       SUPERSET_SECRET_KEY: not-a-secret
+      DEFAULT_PTOSS_TEST_PATHS: "tests/unit_tests/utils/ptoss_unitarios_test.py tests/unit_tests/utils/urls_tests.py tests/unit_tests/utils/version_tests.py"
+      DEFAULT_PTOSS_COVERAGE_MODULES: "superset.tasks.utils superset.utils.core superset.utils.oauth2 superset.utils.screenshots superset.utils.urls superset.utils.version"
+      PTOSS_TEST_PATHS: ${{ github.event.inputs.test_paths }}
+      PTOSS_COVERAGE_MODULES: ${{ github.event.inputs.coverage_modules }}
 
     steps:
       - name: Checkout
@@ -42,27 +55,36 @@ jobs:
 
       - name: Syntax check
         run: |
+          TEST_PATHS="${PTOSS_TEST_PATHS:-$DEFAULT_PTOSS_TEST_PATHS}"
+
           python -m py_compile \
             superset/utils/urls.py \
-            tests/unit_tests/utils/conftest.py \
-            tests/unit_tests/utils/urls_tests.py \
-            tests/unit_tests/utils/version_tests.py \
-            tests/unit_tests/utils/ptoss_unitarios_test.py
+            tests/unit_tests/utils/conftest.py
+
+          declare -A checked_files=()
+          for target in $TEST_PATHS; do
+            file="${target%%::*}"
+            if [[ "$file" == *.py && -z "${checked_files[$file]:-}" ]]; then
+              python -m py_compile "$file"
+              checked_files[$file]=1
+            fi
+          done
 
       - name: Run PTOSS unit tests with coverage
         run: |
+          TEST_PATHS="${PTOSS_TEST_PATHS:-$DEFAULT_PTOSS_TEST_PATHS}"
+          COVERAGE_MODULES="${PTOSS_COVERAGE_MODULES:-$DEFAULT_PTOSS_COVERAGE_MODULES}"
+
+          COV_ARGS=()
+          for module in $COVERAGE_MODULES; do
+            COV_ARGS+=("--cov=$module")
+          done
+
           python -m pytest -q \
             -p pytest_cov.plugin \
             --confcutdir=tests/unit_tests/utils \
-            tests/unit_tests/utils/ptoss_unitarios_test.py \
-            tests/unit_tests/utils/urls_tests.py \
-            tests/unit_tests/utils/version_tests.py \
-            --cov=superset.tasks.utils \
-            --cov=superset.utils.core \
-            --cov=superset.utils.oauth2 \
-            --cov=superset.utils.screenshots \
-            --cov=superset.utils.urls \
-            --cov=superset.utils.version \
+            $TEST_PATHS \
+            "${COV_ARGS[@]}" \
             --cov-branch \
             --cov-report=term-missing \
             --cov-report=xml:coverage.xml \
@@ -73,8 +95,15 @@ jobs:
 
       - name: Add coverage summary
         run: |
+          TEST_PATHS="${PTOSS_TEST_PATHS:-$DEFAULT_PTOSS_TEST_PATHS}"
+          COVERAGE_MODULES="${PTOSS_COVERAGE_MODULES:-$DEFAULT_PTOSS_COVERAGE_MODULES}"
+
           {
             echo "## PTOSS coverage"
+            echo
+            echo "**Test paths:** \`$TEST_PATHS\`"
+            echo
+            echo "**Coverage modules:** \`$COVERAGE_MODULES\`"
             echo
             echo '```text'
             python -m coverage report --show-missing
