@@ -6,11 +6,11 @@ on:
       test_paths:
         description: "Space-separated pytest paths for the PTOSS suite"
         required: false
-        default: "tests/unit_tests/utils/ptoss_unitarios_test.py tests/unit_tests/utils/urls_tests.py tests/unit_tests/utils/version_tests.py"
+        default: "tests/unit_tests/utils/urls_tests.py tests/unit_tests/utils/version_tests.py"
       coverage_modules:
         description: "Space-separated Python modules to include in coverage"
         required: false
-        default: "superset.tasks.utils superset.utils.core superset.utils.oauth2 superset.utils.screenshots superset.utils.urls superset.utils.version"
+        default: "superset.utils.urls superset.utils.version"
   push:
     branches:
       - "ptoss-*"
@@ -37,8 +37,8 @@ jobs:
       PYTEST_DISABLE_PLUGIN_AUTOLOAD: "1"
       SUPERSET_TESTENV: true
       SUPERSET_SECRET_KEY: not-a-secret
-      DEFAULT_PTOSS_TEST_PATHS: "tests/unit_tests/utils/ptoss_unitarios_test.py tests/unit_tests/utils/urls_tests.py tests/unit_tests/utils/version_tests.py"
-      DEFAULT_PTOSS_COVERAGE_MODULES: "superset.tasks.utils superset.utils.core superset.utils.oauth2 superset.utils.screenshots superset.utils.urls superset.utils.version"
+      DEFAULT_PTOSS_TEST_PATHS: "tests/unit_tests/utils/urls_tests.py tests/unit_tests/utils/version_tests.py"
+      DEFAULT_PTOSS_COVERAGE_MODULES: "superset.utils.urls superset.utils.version"
       PTOSS_TEST_PATHS: ${{ github.event.inputs.test_paths }}
       PTOSS_COVERAGE_MODULES: ${{ github.event.inputs.coverage_modules }}
 

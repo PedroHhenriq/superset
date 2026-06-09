@@ -17,18 +17,19 @@ specific language governing permissions and limitations
 under the License.
 -->
 
-# PTOSS-2: Artefatos de Entrega
+# PTOSS-2: Artefatos dos Pull Requests
 
-Este documento registra os artefatos do repositório da equipe para a atividade
-PTOSS-2. O foco é evidenciar o código utilizado, os testes implementados, a
-forma de execução, os relatórios de cobertura e o histórico de commits.
+Este documento registra os artefatos mantidos nesta branch de entrega. A branch
+foi reduzida para conter apenas os itens relacionados aos Pull Requests
+principais, além do workflow usado para gerar evidências de execução e
+cobertura no fork.
 
 ## Pull Requests
 
-| Pull Request | Responsável | Objetivo | Evidência |
-| --- | --- | --- | --- |
-| `fix(urls): preserve repeated query parameters` | Integrante responsável pelo ciclo de TDD | Corrigir `modify_url_query` para preservar parâmetros repetidos e listas em query strings | Branch limpa para PR oficial: `fix/modify-url-query-repeated-params` |
-| `test(version): cover development environment label` | Integrante responsável pelo teste de versionamento | Adicionar teste unitário para `get_dev_env_label` | Branch limpa para PR oficial: `test/get-dev-env-label` |
+| Pull Request | Objetivo | Branch limpa |
+| --- | --- | --- |
+| `fix(urls): preserve repeated query parameters` | Corrigir `modify_url_query` para preservar parâmetros repetidos e listas em query strings | `fix/modify-url-query-repeated-params` |
+| `test(version): cover development environment label` | Adicionar teste unitário para `get_dev_env_label` | `test/get-dev-env-label` |
 
 Links dos PRs oficiais no Apache Superset:
 
@@ -39,47 +40,22 @@ Links dos PRs oficiais no Apache Superset:
 
 ## Código-Fonte Utilizado
 
-### Artefatos dos PRs
-
 | Arquivo | Função | Papel |
 | --- | --- | --- |
 | `superset/utils/urls.py` | `modify_url_query` | Código corrigido por TDD |
 | `tests/unit_tests/utils/urls_tests.py` | testes de `modify_url_query` | Testes do PR de correção |
 | `superset/utils/version.py` | `get_dev_env_label` | Código existente exercitado por teste novo |
 | `tests/unit_tests/utils/version_tests.py` | testes de `get_dev_env_label` | Testes do PR de cobertura unitária |
-
-### Artefatos da cobertura agregada da equipe
-
-| Método/função | Módulo usado no `--cov` | Arquivo de teste esperado |
-| --- | --- | --- |
-| `get_current_user` | `superset.tasks.utils` | `tests/unit_tests/utils/ptoss_unitarios_test.py` |
-| `get_dev_env_label` | `superset.utils.version` | `tests/unit_tests/utils/version_tests.py` ou teste equivalente da equipe |
-| `user_label` | `superset.utils.core` | `tests/unit_tests/utils/ptoss_unitarios_test.py` |
-| `split` | `superset.utils.core` | `tests/unit_tests/utils/ptoss_unitarios_test.py` |
-| `check_for_oauth2` | `superset.utils.oauth2` | `tests/unit_tests/utils/ptoss_unitarios_test.py` |
-| `ScreenshotCachePayload.should_trigger_task` | `superset.utils.screenshots` | `tests/unit_tests/utils/ptoss_unitarios_test.py` |
-| `modify_url_query` | `superset.utils.urls` | `tests/unit_tests/utils/urls_tests.py` |
-
-Quando um integrante substituir ou mover seu teste, a tabela acima deve ser
-atualizada com o novo arquivo de teste e o módulo correspondente deve continuar
-presente na configuração de cobertura.
+| `.github/workflows/ptoss-backend-tests.yml` | workflow de CI | Execução dos testes dos PRs com cobertura no fork |
 
 ## Testes Implementados
 
-| Arquivo | Escopo |
-| --- | --- |
-| `tests/unit_tests/utils/urls_tests.py` | Testes de `modify_url_query`, incluindo preservação de parâmetros repetidos e serialização de listas |
-| `tests/unit_tests/utils/version_tests.py` | Testes de `get_dev_env_label`, incluindo branch/SHA e precedência das variáveis do GitHub |
-| `tests/unit_tests/utils/ptoss_unitarios_test.py` | Testes unitários agregados da atividade, cobrindo os métodos selecionados pela equipe |
-
-Testes principais dos PRs:
-
-| Teste | Objetivo |
-| --- | --- |
-| `test_modify_url_query_preserves_repeated_existing_parameters` | Verifica que `filter=a&filter=b` não é reduzido para apenas um valor |
-| `test_modify_url_query_adds_list_values_as_repeated_parameters` | Verifica que listas recebidas em `kwargs` viram parâmetros repetidos |
-| `test_get_dev_env_label_formats_branch_and_sha` | Verifica combinações de branch e SHA |
-| `test_get_dev_env_label_prefers_github_environment` | Verifica precedência de `GITHUB_HEAD_REF`, `GITHUB_REF_NAME` e `GITHUB_SHA` |
+| Teste | Arquivo | Objetivo |
+| --- | --- | --- |
+| `test_modify_url_query_preserves_repeated_existing_parameters` | `tests/unit_tests/utils/urls_tests.py` | Verifica que parâmetros repetidos existentes, como `filter=a&filter=b`, não são perdidos |
+| `test_modify_url_query_adds_list_values_as_repeated_parameters` | `tests/unit_tests/utils/urls_tests.py` | Verifica que valores recebidos como lista são serializados como parâmetros repetidos |
+| `test_get_dev_env_label_formats_branch_and_sha` | `tests/unit_tests/utils/version_tests.py` | Verifica combinações de branch e SHA presentes ou ausentes |
+| `test_get_dev_env_label_prefers_github_environment` | `tests/unit_tests/utils/version_tests.py` | Verifica precedência das variáveis de ambiente do GitHub sobre valores locais |
 
 ## Instruções de Execução
 
@@ -90,25 +66,19 @@ Com o ambiente de desenvolvimento do Superset configurado:
 ```bash
 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python3 -m pytest \
   --confcutdir=tests/unit_tests/utils \
-  tests/unit_tests/utils/ptoss_unitarios_test.py \
   tests/unit_tests/utils/urls_tests.py \
   tests/unit_tests/utils/version_tests.py \
   -q
 ```
 
-Execução local com cobertura dos módulos analisados:
+Execução local com cobertura dos módulos dos PRs:
 
 ```bash
 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python3 -m pytest \
   -p pytest_cov.plugin \
   --confcutdir=tests/unit_tests/utils \
-  tests/unit_tests/utils/ptoss_unitarios_test.py \
   tests/unit_tests/utils/urls_tests.py \
   tests/unit_tests/utils/version_tests.py \
-  --cov=superset.tasks.utils \
-  --cov=superset.utils.core \
-  --cov=superset.utils.oauth2 \
-  --cov=superset.utils.screenshots \
   --cov=superset.utils.urls \
   --cov=superset.utils.version \
   --cov-branch \
@@ -125,60 +95,60 @@ pre-commit run --all-files
 
 ### Execução no GitHub Actions
 
-O workflow de cobertura da atividade fica em:
+O workflow de cobertura fica em:
 
 ```text
 .github/workflows/ptoss-backend-tests.yml
 ```
 
-Ele executa os testes agregados da equipe e gera o artefato:
+Por padrão, ele executa:
+
+```text
+tests/unit_tests/utils/urls_tests.py
+tests/unit_tests/utils/version_tests.py
+```
+
+E mede cobertura de:
+
+```text
+superset.utils.urls
+superset.utils.version
+```
+
+O workflow gera o artefato:
 
 ```text
 ptoss-coverage-reports
 ```
 
-O artefato contém:
+Esse artefato contém:
 
 ```text
 coverage.xml
 htmlcov/index.html
 ```
 
-O workflow também aceita execução manual com listas customizadas de testes e
-módulos de cobertura. Assim, se os testes dos integrantes forem movidos para
-outros arquivos, basta informar os novos caminhos no campo `test_paths` e manter
-os módulos no campo `coverage_modules`.
-
 ## Relatórios de Cobertura
 
-A cobertura conjunta deve ser gerada na branch de integração da entrega, onde
-todos os testes da equipe estão presentes ao mesmo tempo. O GitHub Actions não
-combina testes que vivem em branches diferentes; ele executa apenas o conteúdo
-da branch selecionada.
+A cobertura é gerada pelo workflow `PTOSS Backend Tests` usando `pytest-cov`.
+Depois da execução no GitHub Actions, consultar:
 
-Processo recomendado:
+1. `Actions`.
+2. Workflow `PTOSS Backend Tests`.
+3. Execução da branch de entrega.
+4. Seção `Summary`, para o log textual de cobertura.
+5. Artefato `ptoss-coverage-reports`, para `coverage.xml` e `htmlcov/`.
 
-1. Criar ou manter uma branch de integração da entrega.
-2. Incorporar nela os testes de todos os integrantes.
-3. Conferir a matriz de métodos e módulos deste documento.
-4. Executar o workflow `PTOSS Backend Tests`.
-5. Baixar o artefato `ptoss-coverage-reports`.
-6. Registrar a tabela de cobertura final nesta seção.
-
-Resultado registrado em execução anterior do workflow:
+Resultado da cobertura dos PRs principais:
 
 | Arquivo | Stmts | Miss | Branch | BrPart | Cobertura |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| `superset/tasks/utils.py` | 123 | 92 | 70 | 0 | 17% |
-| `superset/utils/core.py` | 929 | 587 | 324 | 1 | 29% |
-| `superset/utils/oauth2.py` | 113 | 59 | 20 | 0 | 42% |
-| `superset/utils/screenshots.py` | 201 | 118 | 24 | 0 | 37% |
-| `superset/utils/urls.py` | 32 | 15 | 10 | 0 | 50% |
-| `superset/utils/version.py` | 39 | 21 | 14 | 1 | 47% |
-| Total dos módulos instrumentados | 1437 | 892 | 462 | 2 | 30% |
+| `superset/utils/urls.py` | A preencher | A preencher | A preencher | A preencher | A preencher |
+| `superset/utils/version.py` | A preencher | A preencher | A preencher | A preencher | A preencher |
+| Total dos módulos instrumentados | A preencher | A preencher | A preencher | A preencher | A preencher |
 
-Essa tabela deve ser substituída pelo resultado final depois que todos os testes
-dos integrantes forem integrados na mesma branch de entrega.
+Após a execução do workflow, substituir os campos `A preencher` pelos valores
+mostrados no `Summary` do GitHub Actions ou no relatório `coverage.xml`.
 
 ## Histórico de Commits
 
@@ -197,36 +167,30 @@ dos integrantes forem integrados na mesma branch de entrega.
 | --- | --- |
 | `27842d3f9c test: cover development environment label` | Teste unitário para `get_dev_env_label` |
 
-### Branch de integração da entrega
+### Branch de entrega
 
 | Commit | Papel |
 | --- | --- |
 | `632fea21ec test: add failing tests for repeated URL query params` | Início do TDD para `modify_url_query` |
 | `4209369c15 fix: preserve repeated query params in modify_url_query` | Implementação da correção |
 | `6969bdf43d refactor: use urlencode doseq for query serialization` | Refatoração mantendo testes aprovados |
-| `fe0f9cb453 test: add PTOSS MC/DC unit tests` | Testes unitários adicionais da atividade |
-| `c5343d098e ci: add PTOSS backend coverage workflow` | Workflow de execução e cobertura |
 | `f74ec5d6d8 test: cover development environment label` | Teste de versionamento incluído na integração |
 | `4bc2e14cc3 ci: include version tests in PTOSS workflow` | Inclusão dos testes de versionamento no workflow |
-| `docs: simplify PTOSS repository artifacts` | Documentação final dos artefatos da entrega |
+| `docs: organize PTOSS delivery artifacts` | Documentação dos artefatos dos PRs |
 
-## Integração dos Testes da Equipe
+## Cobertura Conjunta da Equipe
 
-Para medir a cobertura de todos juntos, os testes dos integrantes precisam estar
-na mesma branch de integração. A forma recomendada é:
+Esta branch não contém os testes dos demais integrantes. Para medir a cobertura
+de todos juntos, criar uma branch de integração separada, fazer merge ou
+cherry-pick das branches dos integrantes e executar o workflow informando os
+caminhos dos testes e módulos no `Run workflow`.
 
-```bash
-git switch ptoss-2-entrega
-git merge --no-ff <branch-do-integrante>
+Exemplo de campos para execução manual:
+
+```text
+test_paths:
+tests/unit_tests/utils/urls_tests.py tests/unit_tests/utils/version_tests.py tests/unit_tests/utils/teste_do_integrante.py
+
+coverage_modules:
+superset.utils.urls superset.utils.version superset.outro_modulo
 ```
-
-ou, se for necessário trazer apenas commits específicos:
-
-```bash
-git cherry-pick <commit-do-teste>
-```
-
-Depois de integrar os testes, atualizar este documento e executar o workflow de
-cobertura. Se um teste novo analisar um módulo que ainda não está no workflow,
-adicionar esse módulo ao campo `coverage_modules` na execução manual ou à lista
-padrão do workflow.
