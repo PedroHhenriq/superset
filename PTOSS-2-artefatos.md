@@ -200,46 +200,7 @@ Depois da execução no GitHub Actions, consultar:
 
 Resultado da cobertura dos PRs principais e dos testes integrados:
 
-| Arquivo | Stmts | Miss | Branch | BrPart | Cobertura |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| `superset/utils/urls.py` | A preencher | A preencher | A preencher | A preencher | A preencher |
-| `superset/utils/version.py` | A preencher | A preencher | A preencher | A preencher | A preencher |
-| `superset/tasks/utils.py` | A preencher | A preencher | A preencher | A preencher | A preencher |
-| `superset/utils/core.py` | A preencher | A preencher | A preencher | A preencher | A preencher |
-| `superset/utils/oauth2.py` | A preencher | A preencher | A preencher | A preencher | A preencher |
-| `superset/utils/screenshots.py` | A preencher | A preencher | A preencher | A preencher | A preencher |
-| Total dos módulos instrumentados | A preencher | A preencher | A preencher | A preencher | A preencher |
-
-Após a execução do workflow, substituir os campos `A preencher` pelos valores
-mostrados no `Summary` do GitHub Actions ou no relatório `coverage.xml`.
-
-## Histórico de Commits
-
-### PR `fix(urls): preserve repeated query parameters`
-
-| Commit | Papel |
-| --- | --- |
-| `f148b2f7af test: add failing tests for repeated URL query params` | Red: testes falhando |
-| `4132e0bff6 fix: preserve repeated query params in modify_url_query` | Green: implementação mínima |
-| `dac2465266 refactor: use urlencode doseq for query serialization` | Refactor: uso de API da biblioteca padrão |
-| `d94d0f3a3e style: format URL tests` | Ajuste de formatação |
-
-### PR `test(version): cover development environment label`
-
-| Commit | Papel |
-| --- | --- |
-| `27842d3f9c test: cover development environment label` | Teste unitário para `get_dev_env_label` |
-
-### Branch de entrega
-
-| Commit | Papel |
-| --- | --- |
-| `632fea21ec test: add failing tests for repeated URL query params` | Início do TDD para `modify_url_query` |
-| `4209369c15 fix: preserve repeated query params in modify_url_query` | Implementação da correção |
-| `6969bdf43d refactor: use urlencode doseq for query serialization` | Refatoração mantendo testes aprovados |
-| `f74ec5d6d8 test: cover development environment label` | Teste de versionamento incluído na integração |
-| `4bc2e14cc3 ci: include version tests in PTOSS workflow` | Inclusão dos testes de versionamento no workflow |
-| `docs: organize PTOSS delivery artifacts` | Documentação dos artefatos dos PRs |
+![alt text](image-1.png)
 
 ## Cobertura Conjunta da Equipe
 
