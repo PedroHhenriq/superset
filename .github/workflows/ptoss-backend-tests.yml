@@ -6,11 +6,17 @@ on:
       test_paths:
         description: "Space-separated pytest paths for the PTOSS suite"
         required: false
-        default: "tests/unit_tests/utils/urls_tests.py tests/unit_tests/utils/version_tests.py"
+        default: "tests/unit_tests/utils/urls_tests.py tests/unit_tests/utils/version_tests.py tests/unit_tests/tasks/test_get_current_user.py tests/unit_tests/utils/test_split.py tests/unit_tests/utils/user_label_tests.py tests/unit_tests/utils/oauth2_tests.py tests/unit_tests/utils/test_screenshot_cache_fix.py tests/unit_tests/utils/cohort_tests.py"
       coverage_modules:
         description: "Space-separated Python modules to include in coverage"
         required: false
-        default: "superset.utils.urls superset.utils.version"
+        default: "superset.utils.urls superset.utils.version superset.tasks.utils superset.utils.core superset.utils.oauth2 superset.utils.screenshots superset.utils.cohort"
+  pull_request:
+    paths:
+      - "superset/**/*.py"
+      - "tests/**/*.py"
+      - ".github/workflows/ptoss-backend-tests.yml"
+      - "PTOSS-2-artefatos.md"
   push:
     branches:
       - "ptoss-*"
@@ -19,6 +25,7 @@ on:
       - "superset/**/*.py"
       - "tests/**/*.py"
       - ".github/workflows/ptoss-backend-tests.yml"
+      - "PTOSS-2-artefatos.md"
 
 permissions:
   contents: read
@@ -37,8 +44,8 @@ jobs:
       PYTEST_DISABLE_PLUGIN_AUTOLOAD: "1"
       SUPERSET_TESTENV: true
       SUPERSET_SECRET_KEY: not-a-secret
-      DEFAULT_PTOSS_TEST_PATHS: "tests/unit_tests/utils/urls_tests.py tests/unit_tests/utils/version_tests.py"
-      DEFAULT_PTOSS_COVERAGE_MODULES: "superset.utils.urls superset.utils.version"
+      DEFAULT_PTOSS_TEST_PATHS: "tests/unit_tests/utils/urls_tests.py tests/unit_tests/utils/version_tests.py tests/unit_tests/tasks/test_get_current_user.py tests/unit_tests/utils/test_split.py tests/unit_tests/utils/user_label_tests.py tests/unit_tests/utils/oauth2_tests.py tests/unit_tests/utils/test_screenshot_cache_fix.py tests/unit_tests/utils/cohort_tests.py"
+      DEFAULT_PTOSS_COVERAGE_MODULES: "superset.utils.urls superset.utils.version superset.tasks.utils superset.utils.core superset.utils.oauth2 superset.utils.screenshots superset.utils.cohort"
       PTOSS_TEST_PATHS: ${{ github.event.inputs.test_paths }}
       PTOSS_COVERAGE_MODULES: ${{ github.event.inputs.coverage_modules }}
 
@@ -62,28 +69,60 @@ jobs:
             tests/unit_tests/utils/conftest.py
 
           declare -A checked_files=()
+          existing_tests=()
           for target in $TEST_PATHS; do
             file="${target%%::*}"
+            if [[ ! -f "$file" ]]; then
+              echo "Skipping missing test path: $target"
+              continue
+            fi
+
+            existing_tests+=("$target")
             if [[ "$file" == *.py && -z "${checked_files[$file]:-}" ]]; then
               python -m py_compile "$file"
               checked_files[$file]=1
             fi
           done
 
+          if [[ ${#existing_tests[@]} -eq 0 ]]; then
+            echo "No PTOSS test paths were found."
+            exit 1
+          fi
+
       - name: Run PTOSS unit tests with coverage
         run: |
           TEST_PATHS="${PTOSS_TEST_PATHS:-$DEFAULT_PTOSS_TEST_PATHS}"
           COVERAGE_MODULES="${PTOSS_COVERAGE_MODULES:-$DEFAULT_PTOSS_COVERAGE_MODULES}"
 
+          EXISTING_TEST_PATHS=()
+          for target in $TEST_PATHS; do
+            file="${target%%::*}"
+            if [[ -f "$file" ]]; then
+              EXISTING_TEST_PATHS+=("$target")
+            else
+              echo "Skipping missing test path: $target"
+            fi
+          done
+
+          if [[ ${#EXISTING_TEST_PATHS[@]} -eq 0 ]]; then
+            echo "No PTOSS test paths were found."
+            exit 1
+          fi
+
           COV_ARGS=()
           for module in $COVERAGE_MODULES; do
-            COV_ARGS+=("--cov=$module")
+            module_path="${module//.//}"
+            if [[ -f "$module_path.py" || -f "$module_path/__init__.py" ]]; then
+              COV_ARGS+=("--cov=$module")
+            else
+              echo "Skipping missing coverage module: $module"
+            fi
           done
 
           python -m pytest -q \
             -p pytest_cov.plugin \
             --confcutdir=tests/unit_tests/utils \
-            $TEST_PATHS \
+            "${EXISTING_TEST_PATHS[@]}" \
             "${COV_ARGS[@]}" \
             --cov-branch \
             --cov-report=term-missing \

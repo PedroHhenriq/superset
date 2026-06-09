@@ -106,6 +106,12 @@ Por padrão, ele executa:
 ```text
 tests/unit_tests/utils/urls_tests.py
 tests/unit_tests/utils/version_tests.py
+tests/unit_tests/tasks/test_get_current_user.py
+tests/unit_tests/utils/test_split.py
+tests/unit_tests/utils/user_label_tests.py
+tests/unit_tests/utils/oauth2_tests.py
+tests/unit_tests/utils/test_screenshot_cache_fix.py
+tests/unit_tests/utils/cohort_tests.py
 ```
 
 E mede cobertura de:
@@ -113,7 +119,16 @@ E mede cobertura de:
 ```text
 superset.utils.urls
 superset.utils.version
+superset.tasks.utils
+superset.utils.core
+superset.utils.oauth2
+superset.utils.screenshots
+superset.utils.cohort
 ```
+
+O workflow ignora caminhos de teste e módulos de cobertura que ainda não
+existirem na branch. Dessa forma, a mesma configuração pode ser usada antes e
+depois da integração dos testes dos integrantes.
 
 O workflow gera o artefato:
 
@@ -139,12 +154,17 @@ Depois da execução no GitHub Actions, consultar:
 4. Seção `Summary`, para o log textual de cobertura.
 5. Artefato `ptoss-coverage-reports`, para `coverage.xml` e `htmlcov/`.
 
-Resultado da cobertura dos PRs principais:
+Resultado da cobertura dos PRs principais e dos testes integrados:
 
 | Arquivo | Stmts | Miss | Branch | BrPart | Cobertura |
 | --- | ---: | ---: | ---: | ---: | ---: |
 | `superset/utils/urls.py` | A preencher | A preencher | A preencher | A preencher | A preencher |
 | `superset/utils/version.py` | A preencher | A preencher | A preencher | A preencher | A preencher |
+| `superset/tasks/utils.py` | A preencher | A preencher | A preencher | A preencher | A preencher |
+| `superset/utils/core.py` | A preencher | A preencher | A preencher | A preencher | A preencher |
+| `superset/utils/oauth2.py` | A preencher | A preencher | A preencher | A preencher | A preencher |
+| `superset/utils/screenshots.py` | A preencher | A preencher | A preencher | A preencher | A preencher |
+| `superset/utils/cohort.py` | A preencher | A preencher | A preencher | A preencher | A preencher |
 | Total dos módulos instrumentados | A preencher | A preencher | A preencher | A preencher | A preencher |
 
 Após a execução do workflow, substituir os campos `A preencher` pelos valores
@@ -180,17 +200,29 @@ mostrados no `Summary` do GitHub Actions ou no relatório `coverage.xml`.
 
 ## Cobertura Conjunta da Equipe
 
-Esta branch não contém os testes dos demais integrantes. Para medir a cobertura
-de todos juntos, criar uma branch de integração separada, fazer merge ou
-cherry-pick das branches dos integrantes e executar o workflow informando os
-caminhos dos testes e módulos no `Run workflow`.
+Para medir a cobertura de todos juntos, os testes dos integrantes precisam estar
+na mesma branch que executa o workflow. As branches remotas identificadas no
+fork de entrega são:
+
+| Método/função | Branch remota | Arquivo esperado |
+| --- | --- | --- |
+| `get_current_user` | `entrega/feat/unit-tests-get-current-user` | `tests/unit_tests/tasks/test_get_current_user.py` |
+| `split` | `entrega/test/add-split-unit-tests` | `tests/unit_tests/utils/test_split.py` |
+| `user_label` | `entrega/test/add-user-label-tests` | `tests/unit_tests/utils/user_label_tests.py` |
+| `check_for_oauth2` | `entrega/test/unit-tests-check-for-oauth2` | `tests/unit_tests/utils/oauth2_tests.py` |
+| `ScreenshotCachePayload.should_trigger_task` | `entrega/test/should_trigger_task` | `tests/unit_tests/utils/test_screenshot_cache_fix.py` |
+| `cohort` | `entrega/test/add-user-label-tests` | `tests/unit_tests/utils/cohort_tests.py` |
+
+Como algumas branches estão em bases diferentes do repositório, a integração
+mais segura é trazer apenas os arquivos/commits de teste necessários, evitando
+merge bruto que altere arquivos não relacionados.
 
 Exemplo de campos para execução manual:
 
 ```text
 test_paths:
-tests/unit_tests/utils/urls_tests.py tests/unit_tests/utils/version_tests.py tests/unit_tests/utils/teste_do_integrante.py
+tests/unit_tests/utils/urls_tests.py tests/unit_tests/utils/version_tests.py tests/unit_tests/tasks/test_get_current_user.py tests/unit_tests/utils/test_split.py tests/unit_tests/utils/user_label_tests.py tests/unit_tests/utils/oauth2_tests.py tests/unit_tests/utils/test_screenshot_cache_fix.py
 
 coverage_modules:
-superset.utils.urls superset.utils.version superset.outro_modulo
+superset.utils.urls superset.utils.version superset.tasks.utils superset.utils.core superset.utils.oauth2 superset.utils.screenshots
 ```
