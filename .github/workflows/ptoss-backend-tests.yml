@@ -19,7 +19,7 @@ on:
           tests/unit_tests/utils/oauth2_tests.py::test_check_for_oauth2_exception_always_reraised
           tests/unit_tests/utils/oauth2_tests.py::test_check_for_oauth2_disabled_and_not_needed
           tests/unit_tests/utils/oauth2_tests.py::test_check_for_oauth2_preserves_exception_type
-          tests/unit_tests/utils/test_screenshot_cache_fix.py
+          tests/unit_tests/utils/test_screenshot_cache_fix.py::TestShouldTriggerTask::test_no_trigger_when_all_conditions_false
       coverage_modules:
         description: "Space-separated Python modules to include in coverage"
         required: false
@@ -70,7 +70,7 @@ jobs:
         tests/unit_tests/utils/oauth2_tests.py::test_check_for_oauth2_exception_always_reraised
         tests/unit_tests/utils/oauth2_tests.py::test_check_for_oauth2_disabled_and_not_needed
         tests/unit_tests/utils/oauth2_tests.py::test_check_for_oauth2_preserves_exception_type
-        tests/unit_tests/utils/test_screenshot_cache_fix.py
+        tests/unit_tests/utils/test_screenshot_cache_fix.py::TestShouldTriggerTask::test_no_trigger_when_all_conditions_false
       DEFAULT_PTOSS_COVERAGE_MODULES: "superset.utils.urls superset.utils.version superset.tasks.utils superset.utils.core superset.utils.oauth2 superset.utils.screenshots"
       PTOSS_TEST_PATHS: ${{ github.event.inputs.test_paths }}
       PTOSS_COVERAGE_MODULES: ${{ github.event.inputs.coverage_modules }}

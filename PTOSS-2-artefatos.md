@@ -92,7 +92,7 @@ PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python3 -m pytest \
   tests/unit_tests/utils/oauth2_tests.py::test_check_for_oauth2_exception_always_reraised \
   tests/unit_tests/utils/oauth2_tests.py::test_check_for_oauth2_disabled_and_not_needed \
   tests/unit_tests/utils/oauth2_tests.py::test_check_for_oauth2_preserves_exception_type \
-  tests/unit_tests/utils/test_screenshot_cache_fix.py \
+  tests/unit_tests/utils/test_screenshot_cache_fix.py::TestShouldTriggerTask::test_no_trigger_when_all_conditions_false \
   -q
 ```
 
@@ -114,7 +114,7 @@ PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python3 -m pytest \
   tests/unit_tests/utils/oauth2_tests.py::test_check_for_oauth2_exception_always_reraised \
   tests/unit_tests/utils/oauth2_tests.py::test_check_for_oauth2_disabled_and_not_needed \
   tests/unit_tests/utils/oauth2_tests.py::test_check_for_oauth2_preserves_exception_type \
-  tests/unit_tests/utils/test_screenshot_cache_fix.py \
+  tests/unit_tests/utils/test_screenshot_cache_fix.py::TestShouldTriggerTask::test_no_trigger_when_all_conditions_false \
   --cov=superset.utils.urls \
   --cov=superset.utils.version \
   --cov=superset.tasks.utils \
@@ -156,7 +156,7 @@ tests/unit_tests/utils/oauth2_tests.py::test_check_for_oauth2_enabled_and_needed
 tests/unit_tests/utils/oauth2_tests.py::test_check_for_oauth2_exception_always_reraised
 tests/unit_tests/utils/oauth2_tests.py::test_check_for_oauth2_disabled_and_not_needed
 tests/unit_tests/utils/oauth2_tests.py::test_check_for_oauth2_preserves_exception_type
-tests/unit_tests/utils/test_screenshot_cache_fix.py
+tests/unit_tests/utils/test_screenshot_cache_fix.py::TestShouldTriggerTask::test_no_trigger_when_all_conditions_false
 ```
 
 E mede cobertura de:
@@ -263,7 +263,7 @@ Exemplo de campos para execução manual:
 
 ```text
 test_paths:
-tests/unit_tests/utils/urls_tests.py tests/unit_tests/utils/version_tests.py tests/unit_tests/tasks/test_get_current_user.py tests/unit_tests/utils/test_split.py tests/unit_tests/utils/user_label_tests.py tests/unit_tests/utils/oauth2_tests.py::test_check_for_oauth2_no_exception_no_action tests/unit_tests/utils/oauth2_tests.py::test_check_for_oauth2_disabled_exception_propagated tests/unit_tests/utils/oauth2_tests.py::test_check_for_oauth2_enabled_but_not_needed tests/unit_tests/utils/oauth2_tests.py::test_check_for_oauth2_enabled_and_needed_starts_dance tests/unit_tests/utils/oauth2_tests.py::test_check_for_oauth2_exception_always_reraised tests/unit_tests/utils/oauth2_tests.py::test_check_for_oauth2_disabled_and_not_needed tests/unit_tests/utils/oauth2_tests.py::test_check_for_oauth2_preserves_exception_type tests/unit_tests/utils/test_screenshot_cache_fix.py
+tests/unit_tests/utils/urls_tests.py tests/unit_tests/utils/version_tests.py tests/unit_tests/tasks/test_get_current_user.py tests/unit_tests/utils/test_split.py tests/unit_tests/utils/user_label_tests.py tests/unit_tests/utils/oauth2_tests.py::test_check_for_oauth2_no_exception_no_action tests/unit_tests/utils/oauth2_tests.py::test_check_for_oauth2_disabled_exception_propagated tests/unit_tests/utils/oauth2_tests.py::test_check_for_oauth2_enabled_but_not_needed tests/unit_tests/utils/oauth2_tests.py::test_check_for_oauth2_enabled_and_needed_starts_dance tests/unit_tests/utils/oauth2_tests.py::test_check_for_oauth2_exception_always_reraised tests/unit_tests/utils/oauth2_tests.py::test_check_for_oauth2_disabled_and_not_needed tests/unit_tests/utils/oauth2_tests.py::test_check_for_oauth2_preserves_exception_type tests/unit_tests/utils/test_screenshot_cache_fix.py::TestShouldTriggerTask::test_no_trigger_when_all_conditions_false
 
 coverage_modules:
 superset.utils.urls superset.utils.version superset.tasks.utils superset.utils.core superset.utils.oauth2 superset.utils.screenshots
